@@ -54,13 +54,15 @@ class ArduinoInterfaceNode(MPClabNode):
         self.throttle_pwm_range_l = self.throttle_pwm_neutral - self.throttle_pwm_min
 
         # Make serial connection to Arduino
-        self.serial = Serial(port=self.port, baudrate=self.baudrate, timeout=1, writeTimeout=1)
-	
+        try:
+            self.serial = Serial(port=self.port, baudrate=self.baudrate, timeout=1, writeTimeout=1)
+        except Exception as e:
+            self.get_logger().info('===== Serial connection error: %s =====' % e)
 
         self.update_timer = self.create_timer(self.dt, self.step)
 
         self.control = VehicleActuation(u_a=0, u_steer=0)
-        self.pwm = VehicleActuation(u_a=self.speed_pwm_neutral, u_steer=self.steer_pwm_neutral)
+        self.pwm = VehicleActuation(u_a=self.throttle_pwm_neutral, u_steer=self.steering_pwm_neutral)
 
         self.control_sub = self.create_subscription(
             Actuation,
@@ -78,15 +80,15 @@ class ArduinoInterfaceNode(MPClabNode):
     def step(self):
         # Check for initialization and termination modes
         if self.interface_mode == 'init':
-            self.pwm.u_a = self.speed_pwm_neutral
-            self.pwm.u_steer = self.steer_pwm_neutral
+            self.pwm.u_a = self.throttle_pwm_neutral
+            self.pwm.u_steer = self.steering_pwm_neutral
             if self.node_counter*self.dt >= self.wait_time:
                 self.get_logger().info('===== Arduino Interface start =====')
                 self.mode = 'run'
         elif self.interface_mode == 'finished':
             # Apply braking
-            self.pwm.u_a = self.speed_pwm_min
-            self.pwm.u_steer = self.steer_pwm_min
+            self.pwm.u_a = self.throttle_pwm_min
+            self.pwm.u_steer = self.steering_pwm_min
         else:
             throttle_accel, steer_rad = self.control.u_a, self.control.u_steer
 
@@ -130,3 +132,6 @@ def main(args=None):
 
     node.destroy_node()
     rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
