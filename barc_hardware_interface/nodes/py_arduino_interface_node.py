@@ -3,8 +3,10 @@
 import rclpy
 
 from serial import Serial
+import numpy as np
 
 from mpclab_common.msg import State, Actuation
+from mpclab_common.pytypes import VehicleActuation
 from mpclab_common.mpclab_base_nodes import MPClabNode
 
 SHOW_MSG_TRANSFER_WARNINGS = False
@@ -13,23 +15,22 @@ class ArduinoInterfaceNode(MPClabNode):
 
     def __init__(self):
         super().__init__('arduino_interface')
-
         namespace = self.get_namespace()
 
         self.declare_parameters(
             namespace=namespace,
             parameters=[
-                ('dt',),
-                ('serial.port',),
-                ('serial.baudrate',),
-                ('steering.pwm_max',),
-                ('steering.pwm_min',),
-                ('steering.pwm_neutral',),
-                ('steering.deadband',),
-                ('throttle.pwm_max',),
-                ('throttle.pwm_min',),
-                ('throttle.pwm_neutral',),
-                ('throttle.deadband',)
+                ('dt', 0.01),
+                ('serial.port', '/dev/ttyACM0'),
+                ('serial.baudrate', 9600),
+                ('steering.pwm_max', 2000),
+                ('steering.pwm_min', 1000),
+                ('steering.pwm_neutral', 1500),
+                ('steering.deadband', 0.001),
+                ('throttle.pwm_max', 2000),
+                ('throttle.pwm_min', 1000),
+                ('throttle.pwm_neutral', 1500),
+                ('throttle.deadband', 0.001)
             ]
         )
 
@@ -53,7 +54,8 @@ class ArduinoInterfaceNode(MPClabNode):
         self.throttle_pwm_range_l = self.throttle_pwm_neutral - self.throttle_pwm_min
 
         # Make serial connection to Arduino
-        serial = Serial(port=self.port, baudrate=self.baudrate, timeout=1, writeTimeout=1)
+        self.serial = Serial(port=self.port, baudrate=self.baudrate, timeout=1, writeTimeout=1)
+	
 
         self.update_timer = self.create_timer(self.dt, self.step)
 
@@ -79,7 +81,7 @@ class ArduinoInterfaceNode(MPClabNode):
             self.pwm.u_a = self.speed_pwm_neutral
             self.pwm.u_steer = self.steer_pwm_neutral
             if self.node_counter*self.dt >= self.wait_time:
-                self.get_logger().info('===== Arduino Interface start =====') # TODO: Need to change to rclpy.logging
+                self.get_logger().info('===== Arduino Interface start =====')
                 self.mode = 'run'
         elif self.interface_mode == 'finished':
             # Apply braking
@@ -92,10 +94,10 @@ class ArduinoInterfaceNode(MPClabNode):
             if np.abs(steer_rad) <= self.steering_deadband:
                 self.pwm.u_steer = self.steering_pwm_neutral
             elif steer_rad > self.steering_deadband:
-                self.pwm.u_steer = steer_rad / (np.pi/2) * self.servo_pwm_range_u + self.servo_pwm_neutral
+                self.pwm.u_steer = steer_rad / (np.pi/2) * self.steering_pwm_range_u + self.steering_pwm_neutral
             elif steer_rad < -self.steering_deadband:
-                self.pwm.u_steer = steer_rad / (np.pi/2) * self.servo_pwm_range_l + self.servo_pwm_neutral
-            self.pwm.u_steer = self.saturate_pwm(self.pwm.u_steer, self.steering_pwm_max, self.steering_pwm_min))
+                self.pwm.u_steer = steer_rad / (np.pi/2) * self.steering_pwm_range_l + self.steering_pwm_neutral
+            self.pwm.u_steer = self.saturate_pwm(self.pwm.u_steer, self.steering_pwm_max, self.steering_pwm_min)
 
             # Map from desired acceleration to PWM
             if np.abs(throttle_accel) <= self.throttle_deadband:
