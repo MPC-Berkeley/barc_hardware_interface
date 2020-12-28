@@ -1,3 +1,5 @@
+sudo python2 -m pip install setuptools configobj glob2 jinja2 ordereddict
+
 # install command-line arduino tool
 if ! hash ano 2>/dev/null; then
     # download tool
@@ -7,9 +9,5 @@ if ! hash ano 2>/dev/null; then
 
     # install tool
     sudo make install; cd; sudo rm -rf Arturo
-
-    # set avrdude configuration file
-    sudo mkdir /etc/avrdude
-    sudo cp /etc/avrdude.conf /etc/avrdude/
     cd;
 fi

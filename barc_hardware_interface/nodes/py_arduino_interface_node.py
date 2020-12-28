@@ -20,9 +20,9 @@ class ArduinoInterfaceNode(MPClabNode):
         self.declare_parameters(
             namespace=namespace,
             parameters=[
-                ('dt', 0.01),
+                ('dt', 0.1),
                 ('serial.port', '/dev/ttyACM0'),
-                ('serial.baudrate', 9600),
+                ('serial.baudrate', 115200),
                 ('steering.pwm_max', 2000),
                 ('steering.pwm_min', 1000),
                 ('steering.pwm_neutral', 1500),
@@ -55,7 +55,7 @@ class ArduinoInterfaceNode(MPClabNode):
 
         # Make serial connection to Arduino
         try:
-            self.serial = Serial(port=self.port, baudrate=self.baudrate, timeout=1, writeTimeout=1)
+            self.serial = Serial(port=self.port, baudrate=self.baudrate, timeout=self.dt, writeTimeout=self.dt)
         except Exception as e:
             self.get_logger().info('===== Serial connection error: %s =====' % e)
 
@@ -84,7 +84,7 @@ class ArduinoInterfaceNode(MPClabNode):
             self.pwm.u_steer = self.steering_pwm_neutral
             if self.node_counter*self.dt >= self.wait_time:
                 self.get_logger().info('===== Arduino Interface start =====')
-                self.mode = 'run'
+                self.interface_mode = 'run'
         elif self.interface_mode == 'finished':
             # Apply braking
             self.pwm.u_a = self.throttle_pwm_min
@@ -119,7 +119,7 @@ class ArduinoInterfaceNode(MPClabNode):
         self.node_counter += 1
 
     def send_serial(self, pwm):
-        serial_msg = '({},{})'.format(pwm.u_a, pwm.u_steer)
+        serial_msg = '& {} {}'.format(pwm.u_a, pwm.u_steer)
         self.serial.write(serial_msg.encode('ascii'))
 
     def saturate_pwm(self, pwm, pwm_max, pwm_min):
