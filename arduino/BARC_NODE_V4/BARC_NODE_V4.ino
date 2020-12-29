@@ -1,3 +1,4 @@
+
 #include "Servo.h"
 
 int TESTING_STATE = false; //test between receiving Nvidia Jetson Signal and Writing Constant PWM
@@ -76,27 +77,19 @@ volatile uint32_t BL_DT;
 volatile uint32_t BR_DT;
 
 void setup() {
-
-  Serial.begin(115200);
+  // SerialUSB is the Arduino Due Native USB Port
+  SerialUSB.begin(115200);
 
   servoChannel1.attach(CHANNEL1_OUT_PIN);
   servoChannel2.attach(CHANNEL2_OUT_PIN);
 
   pinMode(RECEIVER_STATE_PIN, INPUT);
-//  pinMode(FL_IN_PIN, INPUT_PULLUP);
-//  pinMode(FR_IN_PIN, INPUT_PULLUP);
-//  pinMode(BL_IN_PIN, INPUT_PULLUP);
-//  pinMode(BR_IN_PIN, INPUT_PULLUP);
   pinMode(PHASE_A_servo, INPUT_PULLUP);
   pinMode(PHASE_B_servo, INPUT_PULLUP);
   pinMode(PHASE_C_servo, INPUT_PULLUP);
 
   attachInterrupt(CHANNEL1_IN_PIN, MEASURE_CHANNEL_1, CHANGE);
   attachInterrupt(CHANNEL2_IN_PIN, MEASURE_CHANNEL_2, CHANGE);
-//  attachInterrupt(FL_IN_PIN, MEASURE_FL, CHANGE);
-//  attachInterrupt(FR_IN_PIN, MEASURE_FR, CHANGE);
-//  attachInterrupt(BL_IN_PIN, MEASURE_BL, CHANGE);
-//  attachInterrupt(BR_IN_PIN, MEASURE_BR, CHANGE);
   attachInterrupt(PHASE_A_servo, calc_A_servo, CHANGE);
   attachInterrupt(PHASE_B_servo, calc_B_servo, CHANGE);
   attachInterrupt(PHASE_C_servo, calc_C_servo, CHANGE);
@@ -118,74 +111,31 @@ void loop() {
     bUpdateFlags = bUpdateFlagsShared;
 
     if (bUpdateFlags & CHANNEL1_FLAG) {
-      //      if (unChannel1In > 2025) {
-      //        unChannel1In = str_prev_1 - str_prev_2 + str_prev_1;
-      //      }
-      //      str_prev_2 = str_prev_1;
-      //      str_prev_1 = unChannel1In;
       unChannel1In = CHANNEL_1_IN_PWM;
     }
 
     if (bUpdateFlags & CHANNEL2_FLAG) {
-      //      if (unChannel2In > 2025) {
-      //        unChannel2In = thr_prev_1 - thr_prev_2 + thr_prev_1;
-      //      }
-      //      str_prev_2 = str_prev_1;
-      //      str_prev_1 = unChannel1In;
       unChannel2In = CHANNEL_2_IN_PWM;
     }
 
-//    if (bUpdateFlags & ENCODER_FL_FLAG) {
-//      FL_DT = FL_time_pres - FL_time_prev;
-//    }
-//
-//    if (bUpdateFlags & ENCODER_FR_FLAG) {
-//      FR_DT = FL_time_pres - FR_time_prev;
-//    }
-//
-//    if (bUpdateFlags & ENCODER_BL_FLAG) {
-//      BL_DT = BL_time_pres - BL_time_prev;
-//    }
-//
-//    if (bUpdateFlags & ENCODER_BR_FLAG) {
-//      BR_DT = BR_time_pres - BR_time_prev;
-//    }
-
     bUpdateFlagsShared = 0;
-
-    //interrupts();
   }
 
   servo_angle = servo_enc_count * 0.3515625; //change to calculate function that calculates all angles and velocities
   steering_angle = servo_angle * 0.65;
 
-//  Serial.println();
-//  Serial.print(CHANNEL_1_IN_PWM);
-//  Serial.print(" , ");
-//  Serial.print(CHANNEL_2_IN_PWM);
-//  Serial.print(" , ");
-//  Serial.print(steering_angle);
-//  Serial.print(" , ");
-//  Serial.print(wheel_enc_count_FL);
-//  Serial.print(" , ");
-//  Serial.print(wheel_enc_count_FR);
-//  Serial.print(" , ");
-//  Serial.print(wheel_enc_count_BL);
-//  Serial.print(" , ");
-//  Serial.print(wheel_enc_count_BR);
-
-  if (TESTING_STATE = true) {
-    Serial.print("ang");
-    Serial.print(servo_angle);
-    Serial.print(" , ss_enc_cnt: ");
-    Serial.print(servo_enc_count);
-    Serial.print(" ,enc_A ");
-    Serial.print(encoder_servo_state_A);
-    Serial.print(" ,enc_B");
-    Serial.print(encoder_servo_state_B);
-    Serial.print(" ,enc_C");
-    Serial.print(encoder_servo_state_C);
-  }
+//  if (TESTING_STATE = true) {
+//    Serial.print("ang");
+//    Serial.print(servo_angle);
+//    Serial.print(" , ss_enc_cnt: ");
+//    Serial.print(servo_enc_count);
+//    Serial.print(" ,enc_A ");
+//    Serial.print(encoder_servo_state_A);
+//    Serial.print(" ,enc_B");
+//    Serial.print(encoder_servo_state_B);
+//    Serial.print(" ,enc_C");
+//    Serial.print(encoder_servo_state_C);
+//  }
 
   steering_read = CHANNEL_1_IN_PWM;
   throttle_read = CHANNEL_2_IN_PWM;
@@ -196,31 +146,31 @@ void loop() {
 
     servoChannel2.writeMicroseconds(throttle_write);
     servoChannel1.writeMicroseconds(steering_write);
-  } else if (receiverStateVar == HIGH) {
+  } 
+  else if (receiverStateVar == HIGH) {
 
-    if (TESTING_STATE = true) {
+    if (TESTING_STATE == true) {
       throttle_write = 1500;
       steering_write = 1500;
-    } else {
-
+    } 
+    else {
       // NEW REQUIRED FORMAT: "HANDSHAKE" "PWMTHROTTLE" "STEERINGIN"
       // (neutral formatting): & 1500 1500
-
-      byte size = Serial.readBytes(receivedData, 100); //reads serial data into buffer and times out after 100ms
-      receivedData[size] = 0; //end of the string can be specified with a 0.
-      char *s = strtok(receivedData, " "); //allows string to be broken into tokens by " ".
-      if (s[0] == handshake) {
-        s = strtok(NULL, " ");
-        if (s != NULL) throttle_read = atoi(s); //sets variable to received data and converts ASCII to integer if message is not empty
-        s = strtok(NULL, " ");
-        if (s != NULL) steering_read = atoi(s); //sets variable to received data and converts ASCII to integer if message is not empty
-        steering_read = steering_write;
-        throttle_read = throttle_write;
-      } else {
-
-        throttle_write = 1500; //neutral PWM
-        steering_write = 1500; //neutral PWM
-
+      if (SerialUSB.available()) {
+        byte size = SerialUSB.readBytes(receivedData, 100); //reads serial data into buffer and times out after 100ms
+        receivedData[size] = 0; //end of the string can be specified with a 0.
+        char *s = strtok(receivedData, " "); //allows string to be broken into tokens by " ".
+        if (s[0] == handshake) {
+          s = strtok(NULL, " ");
+          if (s != NULL) throttle_read = atoi(s); //sets variable to received data and converts ASCII to integer if message is not empty
+          s = strtok(NULL, " ");
+          if (s != NULL) steering_read = atoi(s); //sets variable to received data and converts ASCII to integer if message is not empty
+          steering_write = steering_read;
+          throttle_write = throttle_read;
+        } else {
+          throttle_write = 1500; //neutral PWM
+          steering_write = 1500; //neutral PWM
+        }
       }
     }
 

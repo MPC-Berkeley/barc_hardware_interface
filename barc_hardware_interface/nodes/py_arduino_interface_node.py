@@ -112,9 +112,10 @@ class ArduinoInterfaceNode(MPClabNode):
 
         try:
             self.send_serial(self.pwm)
+            # self.get_logger().info('Send success')
         except Exception as e:
             self.get_logger().info('===== Serial comms error: %s =====' % e)
-            self.interface_mode = 'finished'
+            # self.interface_mode = 'finished'
 
         self.node_counter += 1
 
