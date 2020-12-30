@@ -21,6 +21,6 @@ By default, the Arduino IDE does not include the core required for interfacing w
 - Choose the **Arduino Due (Native USB Port)** with port **/dev/tty/ACMx** (make sure that you grant write permission with `sudo chmod 777 /dev/tty/ACMx`)
 - Verify that you can upload a sketch to the DUE
 
-### 3. Install the Arduino command line utility
+<!-- ### 3. Install the Arduino command line utility
 - The script for performing the installation is located in `arduino/scripts/install_arduino_cmd.sh`
-- The script will clone the repository containing the utility and install it
+- The script will clone the repository containing the utility and install it  -->
