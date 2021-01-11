@@ -90,7 +90,7 @@ class ArduinoInterfaceNode(MPClabNode):
             self.pwm.u_a = self.throttle_pwm_min
             self.pwm.u_steer = self.steering_pwm_min
         else:
-            throttle_accel, steer_rad = self.control.u_a, self.control.u_steer
+            throttle_accel, steer_rad = self.control.u_a, -self.control.u_steer
 
             # Map from desired steering angle to PWM
             if np.abs(steer_rad) <= self.steering_deadband:
