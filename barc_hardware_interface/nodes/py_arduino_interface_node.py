@@ -112,7 +112,7 @@ class ArduinoInterfaceNode(MPClabNode):
 
         try:
             self.send_serial(self.pwm)
-            # self.get_logger().info('Send success')
+            # self.get_logger().info('%g: %s' %(self.node_counter, str(self.pwm)))
         except Exception as e:
             self.get_logger().info('===== Serial comms error: %s =====' % e)
             # self.interface_mode = 'finished'
@@ -120,7 +120,8 @@ class ArduinoInterfaceNode(MPClabNode):
         self.node_counter += 1
 
     def send_serial(self, pwm):
-        serial_msg = '& {} {}'.format(pwm.u_a, pwm.u_steer)
+        serial_msg = '& {} {}\r'.format(int(pwm.u_a), int(pwm.u_steer))
+        self.get_logger().info(serial_msg)
         self.serial.write(serial_msg.encode('ascii'))
 
     def saturate_pwm(self, pwm, pwm_max, pwm_min):
