@@ -23,9 +23,10 @@ class ArduinoInterfaceNode(MPClabNode):
                 ('dt', 0.1),
                 ('serial.port', '/dev/ttyACM0'),
                 ('serial.baudrate', 115200),
-                ('steering.pwm_max', 2000),
-                ('steering.pwm_min', 1000),
+                ('steering.pwm_max', 1800),
+                ('steering.pwm_min', 1200),
                 ('steering.pwm_neutral', 1500),
+                ('steering.gain', 200/17),
                 ('steering.deadband', 0.001),
                 ('throttle.pwm_max', 2000),
                 ('throttle.pwm_min', 1000),
@@ -42,6 +43,7 @@ class ArduinoInterfaceNode(MPClabNode):
         self.steering_pwm_max = self.get_parameter('.'.join((namespace,'steering.pwm_max'))).value
         self.steering_pwm_min = self.get_parameter('.'.join((namespace,'steering.pwm_min'))).value
         self.steering_pwm_neutral = self.get_parameter('.'.join((namespace,'steering.pwm_neutral'))).value
+        self.steering_gain = self.get_parameter('.'.join((namespace, 'steering.gain'))).value
         self.steering_deadband = self.get_parameter('.'.join((namespace,'steering.deadband'))).value
         self.steering_pwm_range_u = self.steering_pwm_max - self.steering_pwm_neutral
         self.steering_pwm_range_l = self.steering_pwm_neutral - self.steering_pwm_min
@@ -96,9 +98,9 @@ class ArduinoInterfaceNode(MPClabNode):
             if np.abs(steer_rad) <= self.steering_deadband:
                 self.pwm.u_steer = self.steering_pwm_neutral
             elif steer_rad > self.steering_deadband:
-                self.pwm.u_steer = steer_rad / (np.pi/2) * self.steering_pwm_range_u + self.steering_pwm_neutral
+                self.pwm.u_steer = steer_rad * (180/np.pi) * self.steering_gain * self.steering_pwm_range_u + self.steering_pwm_neutral
             elif steer_rad < -self.steering_deadband:
-                self.pwm.u_steer = steer_rad / (np.pi/2) * self.steering_pwm_range_l + self.steering_pwm_neutral
+                self.pwm.u_steer = steer_rad * (180/np.pi) * self.steering_gain * self.steering_pwm_range_l + self.steering_pwm_neutral
             self.pwm.u_steer = self.saturate_pwm(self.pwm.u_steer, self.steering_pwm_max, self.steering_pwm_min)
 
             # Map from desired acceleration to PWM
