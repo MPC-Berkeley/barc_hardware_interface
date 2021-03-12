@@ -7,6 +7,10 @@ int TESTING_STATE = false; //test between receiving Nvidia Jetson Signal and Wri
 const float pi = 3.14159265359;
 const float R = 0.0325; //wheel radius
 
+#define TIME_DELAY 300 // assuming milli
+int last_received = 0;
+bool serial_started = false;
+
 //receiver variables
 char receivedData[100]; //creates variable to store data from jetson (100 is byte size)
 char handshake = '&';
@@ -124,19 +128,6 @@ void loop() {
   servo_angle = servo_enc_count * 0.3515625; //change to calculate function that calculates all angles and velocities
   steering_angle = servo_angle * 0.65;
 
-//  if (TESTING_STATE = true) {
-//    Serial.print("ang");
-//    Serial.print(servo_angle);
-//    Serial.print(" , ss_enc_cnt: ");
-//    Serial.print(servo_enc_count);
-//    Serial.print(" ,enc_A ");
-//    Serial.print(encoder_servo_state_A);
-//    Serial.print(" ,enc_B");
-//    Serial.print(encoder_servo_state_B);
-//    Serial.print(" ,enc_C");
-//    Serial.print(encoder_servo_state_C);
-//  }
-
   steering_read = CHANNEL_1_IN_PWM;
   throttle_read = CHANNEL_2_IN_PWM;
 
@@ -157,7 +148,7 @@ void loop() {
       // NEW REQUIRED FORMAT: "HANDSHAKE" "PWMTHROTTLE" "STEERINGIN"
       // (neutral formatting): & 1500 1500
       if (SerialUSB.available()) {
-        byte size = SerialUSB.readBytes(receivedData, 100); //reads serial data into buffer and times out after 100ms
+        byte size = SerialUSB.readBytesUntil('\r', receivedData, 50); //reads serial data into buffer and times out after 100ms
         receivedData[size] = 0; //end of the string can be specified with a 0.
         char *s = strtok(receivedData, " "); //allows string to be broken into tokens by " ".
         if (s[0] == handshake) {
@@ -167,11 +158,13 @@ void loop() {
           if (s != NULL) steering_read = atoi(s); //sets variable to received data and converts ASCII to integer if message is not empty
           steering_write = steering_read;
           throttle_write = throttle_read;
-        } else {
-          throttle_write = 1500; //neutral PWM
-          steering_write = 1500; //neutral PWM
         }
-      }
+        last_received = millis();
+        serial_started = true;
+      }else if(millis() - last_received > TIME_DELAY && serial_started){
+        throttle_write = 1000;
+        steering_write = 1500;
+       }
     }
 
     servoChannel2.writeMicroseconds(throttle_write);
