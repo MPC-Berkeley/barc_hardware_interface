@@ -98,9 +98,9 @@ class ArduinoInterfaceNode(MPClabNode):
             if np.abs(steer_rad) <= self.steering_deadband:
                 self.pwm.u_steer = self.steering_pwm_neutral
             elif steer_rad > self.steering_deadband:
-                self.pwm.u_steer = steer_rad * (180/np.pi) * self.pwm_gain * self.steering_pwm_range_u + self.steering_pwm_neutral
+                self.pwm.u_steer = steer_rad * (180/np.pi) * self.pwm_gain + self.steering_pwm_neutral
             elif steer_rad < -self.steering_deadband:
-                self.pwm.u_steer = steer_rad * (180/np.pi) * self.pwm_gain * self.steering_pwm_range_l + self.steering_pwm_neutral
+                self.pwm.u_steer = steer_rad * (180/np.pi) * self.pwm_gain + self.steering_pwm_neutral
             self.pwm.u_steer = self.saturate_pwm(self.pwm.u_steer, self.steering_pwm_max, self.steering_pwm_min)
 
             # Map from desired acceleration to PWM
