@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import rclpy
+from rclpy.qos import qos_profile_sensor_data
 
 from serial import Serial
 import numpy as np
@@ -74,7 +75,7 @@ class ArduinoInterfaceNode(MPClabNode):
             Actuation,
             'ecu',
             self.control_callback,
-            10)
+            qos_profile_sensor_data)
 
         self.wait_time = 1.0
         self.interface_mode = 'init'
