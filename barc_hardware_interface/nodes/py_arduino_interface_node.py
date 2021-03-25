@@ -34,6 +34,10 @@ class ArduinoInterfaceNode(MPClabNode):
             ]
         )
 
+        # Get handle to ROS clock
+        self.clock = self.get_clock()
+        self.t_start = self.clock.now().nanoseconds/1E9
+
         self.dt = self.get_parameter('.'.join((namespace,'dt'))).value
 
         self.port = self.get_parameter('.'.join((namespace,'serial.port'))).value
@@ -73,20 +77,22 @@ class ArduinoInterfaceNode(MPClabNode):
             10)
 
         self.wait_time = 1.0
-        self.node_counter = 0
         self.interface_mode = 'init'
 
     def control_callback(self, msg):
         self.unpack_msg(msg, self.control)
 
     def step(self):
+        t = self.clock.now().nanoseconds/1E9
+        if  t - self.t_start < self.wait_time:
+            return
+
         # Check for initialization and termination modes
         if self.interface_mode == 'init':
             self.pwm.u_a = self.throttle_pwm_neutral
             self.pwm.u_steer = self.steering_pwm_neutral
-            if self.node_counter*self.dt >= self.wait_time:
-                self.get_logger().info('===== Arduino Interface start =====')
-                self.interface_mode = 'run'
+            self.get_logger().info('===== Arduino Interface start =====')
+            self.interface_mode = 'run'
         elif self.interface_mode == 'finished':
             # Apply braking
             self.pwm.u_a = self.throttle_pwm_min
@@ -114,12 +120,9 @@ class ArduinoInterfaceNode(MPClabNode):
 
         try:
             self.send_serial(self.pwm)
-            # self.get_logger().info('%g: %s' %(self.node_counter, str(self.pwm)))
         except Exception as e:
             self.get_logger().info('===== Serial comms error: %s =====' % e)
             # self.interface_mode = 'finished'
-
-        self.node_counter += 1
 
     def send_serial(self, pwm):
         serial_msg = '& {} {}\r'.format(int(pwm.u_a), int(pwm.u_steer))
