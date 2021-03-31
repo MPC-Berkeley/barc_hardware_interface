@@ -125,12 +125,12 @@ class ArduinoInterfaceNode(MPClabNode):
             self.get_logger().info('===== Serial comms error: %s =====' % e)
             # self.interface_mode = 'finished'
 
-    def send_serial(self, pwm):
+    def send_serial(self, pwm: VehicleActuation):
         serial_msg = '& {} {}\r'.format(int(pwm.u_a), int(pwm.u_steer))
         self.get_logger().info(serial_msg)
         self.serial.write(serial_msg.encode('ascii'))
 
-    def saturate_pwm(self, pwm, pwm_max, pwm_min):
+    def saturate_pwm(self, pwm: float, pwm_max: float, pwm_min: float) -> float:
         return np.around(max(min(pwm, pwm_max), pwm_min))
 
 def main(args=None):
