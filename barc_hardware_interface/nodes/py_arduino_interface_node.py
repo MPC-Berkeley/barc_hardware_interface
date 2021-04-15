@@ -60,6 +60,8 @@ class ArduinoInterfaceNode(MPClabNode):
         self.throttle_pwm_range_u = self.throttle_pwm_max - self.throttle_pwm_neutral
         self.throttle_pwm_range_l = self.throttle_pwm_neutral - self.throttle_pwm_min
 
+        self.wheel_encoder_counts = {'FL': 0, 'FR': 0, 'BL': 0, 'BR': 0}
+
         # Make serial connection to Arduino
         try:
             self.serial = Serial(port=self.port, baudrate=self.baudrate, timeout=self.dt, writeTimeout=self.dt)
@@ -119,11 +121,39 @@ class ArduinoInterfaceNode(MPClabNode):
                 self.pwm.u_a = (3.5 + 6.73*throttle_accel)*self.throttle_pwm_range_l/90.0+ self.throttle_pwm_neutral
             self.pwm.u_a = self.saturate_pwm(self.pwm.u_a, self.throttle_pwm_max, self.throttle_pwm_min)
 
+        # Try sending pwm values over serial to Arduino
         try:
             self.send_serial(self.pwm)
         except Exception as e:
             self.get_logger().info('===== Serial comms error: %s =====' % e)
             # self.interface_mode = 'finished'
+
+        # Now try to read from serial port for wheel encoder measurements
+        read_success = False
+        while self.serial.in_waiting > 0:
+            msg = str(self.read_until(expected='\n', size=100))
+            count_strs = msg.split(',')
+            try:
+                # Try to convert strings to integers
+                counts = [int(s) for s in count_strs]
+            except:
+                continue
+
+            # If we get 4 integers, consider that as a successful read
+            if len(counts) == 4:
+                self.serial.reset_input_buffer()
+                read_success = True
+                break
+
+        if not read_success:
+            self.get_logger().info('===== Serial comms warning: could not read from Arduino =====' % e)
+        else:
+            self.wheel_encoder_counts['FL'] = counts[0]
+            self.wheel_encoder_counts['FR'] = counts[1]
+            self.wheel_encoder_counts['BL'] = counts[2]
+            self.wheel_encoder_counts['BR'] = counts[3]
+
+        self.get_logger().info('FL: %i, FR: %i, BL: %i, BR: %i' % (self.wheel_encoder_counts['FL'], self.wheel_encoder_counts['FR'], self.wheel_encoder_counts['BL'], self.wheel_encoder_counts['BR']))
 
     def send_serial(self, pwm: VehicleActuation):
         serial_msg = '& {} {}\r'.format(int(pwm.u_a), int(pwm.u_steer))
