@@ -6,8 +6,8 @@ from rclpy.qos import qos_profile_sensor_data
 from serial import Serial
 import numpy as np
 
-from mpclab_common.msg import State, Actuation
-from mpclab_common.pytypes import VehicleActuation
+from mpclab_common.msg import State, Actuation, Encoder
+from mpclab_common.pytypes import VehicleActuation, VehicleEncoder
 from mpclab_common.mpclab_base_nodes import MPClabNode
 
 SHOW_MSG_TRANSFER_WARNINGS = False
@@ -60,7 +60,8 @@ class ArduinoInterfaceNode(MPClabNode):
         self.throttle_pwm_range_u = self.throttle_pwm_max - self.throttle_pwm_neutral
         self.throttle_pwm_range_l = self.throttle_pwm_neutral - self.throttle_pwm_min
 
-        self.wheel_encoder_counts = {'FL': 0, 'FR': 0, 'BL': 0, 'BR': 0}
+        self.encoder = VehicleEncoder()
+        self.wheel_radius = 0.0325
 
         # Make serial connection to Arduino
         try:
@@ -78,6 +79,12 @@ class ArduinoInterfaceNode(MPClabNode):
             'ecu',
             self.control_callback,
             qos_profile_sensor_data)
+
+        self.encoder_pub = self.create_publisher(
+            Encoder,
+            'encoder',
+            qos_profile_sensor_data)
+        self.encoder_msg = Encoder()
 
         self.wait_time = 1.0
         self.interface_mode = 'init'
@@ -131,7 +138,8 @@ class ArduinoInterfaceNode(MPClabNode):
         # Now try to read from serial port for wheel encoder measurements
         read_success = False
         while self.serial.in_waiting > 0:
-            msg = str(self.read_until(expected='\n', size=100))
+            msg = self.serial.read_until(expected='\r\n'.encode('ascii'), size=50).decode('ascii')
+            # self.get_logger().info(msg)
             count_strs = msg.split(',')
             try:
                 # Try to convert strings to integers
@@ -146,18 +154,17 @@ class ArduinoInterfaceNode(MPClabNode):
                 break
 
         if not read_success:
-            self.get_logger().info('===== Serial comms warning: could not read from Arduino =====' % e)
+            self.get_logger().info('===== Serial comms warning: could not read from Arduino =====')
         else:
-            self.wheel_encoder_counts['FL'] = counts[0]
-            self.wheel_encoder_counts['FR'] = counts[1]
-            self.wheel_encoder_counts['BL'] = counts[2]
-            self.wheel_encoder_counts['BR'] = counts[3]
-
-        self.get_logger().info('FL: %i, FR: %i, BL: %i, BR: %i' % (self.wheel_encoder_counts['FL'], self.wheel_encoder_counts['FR'], self.wheel_encoder_counts['BL'], self.wheel_encoder_counts['BR']))
+            self.encoder.t = t
+            self.encoder.fl, self.encoder.fr, self.encoder.bl, self.encoder.br = counts
+        
+            encoder_msg = self.populate_msg(Encoder(), self.encoder)
+            self.encoder_pub.publish(encoder_msg)
 
     def send_serial(self, pwm: VehicleActuation):
         serial_msg = '& {} {}\r'.format(int(pwm.u_a), int(pwm.u_steer))
-        self.get_logger().info(serial_msg)
+        # self.get_logger().info(serial_msg)
         self.serial.write(serial_msg.encode('ascii'))
 
     def saturate_pwm(self, pwm: float, pwm_max: float, pwm_min: float) -> float:

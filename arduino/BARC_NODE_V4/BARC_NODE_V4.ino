@@ -11,6 +11,9 @@ const float R = 0.0325; //wheel radius
 int last_received = 0;
 bool serial_started = false;
 
+#define WRITE_INTERVAL 20 // assuming milli
+int write_time = 0;
+
 //receiver variables
 char receivedData[100]; //creates variable to store data from jetson (100 is byte size)
 char handshake = '&';
@@ -52,10 +55,10 @@ volatile uint32_t BR_time_pres = 0;
 #define CHANNEL2_IN_PIN 3
 #define CHANNEL1_OUT_PIN 4
 #define CHANNEL2_OUT_PIN 5
-#define FL_IN_PIN 22
-#define FR_IN_PIN 24
-#define BL_IN_PIN 26
-#define BR_IN_PIN 28
+#define FL_IN_PIN 42
+#define FR_IN_PIN 44
+#define BL_IN_PIN 46
+#define BR_IN_PIN 48
 #define RECEIVER_STATE_PIN 30
 #define PHASE_A_servo 32
 #define PHASE_B_servo 34
@@ -88,17 +91,26 @@ void setup() {
   servoChannel2.attach(CHANNEL2_OUT_PIN);
 
   pinMode(RECEIVER_STATE_PIN, INPUT);
+  pinMode(FL_IN_PIN, INPUT_PULLUP);
+  pinMode(FR_IN_PIN, INPUT_PULLUP);
+  pinMode(BL_IN_PIN, INPUT_PULLUP);
+  pinMode(BR_IN_PIN, INPUT_PULLUP);
   pinMode(PHASE_A_servo, INPUT_PULLUP);
   pinMode(PHASE_B_servo, INPUT_PULLUP);
   pinMode(PHASE_C_servo, INPUT_PULLUP);
 
   attachInterrupt(CHANNEL1_IN_PIN, MEASURE_CHANNEL_1, CHANGE);
   attachInterrupt(CHANNEL2_IN_PIN, MEASURE_CHANNEL_2, CHANGE);
+  attachInterrupt(FL_IN_PIN, MEASURE_FL, CHANGE);
+  attachInterrupt(FR_IN_PIN, MEASURE_FR, CHANGE);
+  attachInterrupt(BL_IN_PIN, MEASURE_BL, CHANGE);
+  attachInterrupt(BR_IN_PIN, MEASURE_BR, CHANGE);
   attachInterrupt(PHASE_A_servo, calc_A_servo, CHANGE);
   attachInterrupt(PHASE_B_servo, calc_B_servo, CHANGE);
   attachInterrupt(PHASE_C_servo, calc_C_servo, CHANGE);
 
   time_initial = micros();
+  write_time = millis();
 }
 
 void loop() {
@@ -110,7 +122,7 @@ void loop() {
   static uint32_t bUpdateFlags;
 
   if (bUpdateFlagsShared) {
-    //noInterrupts();
+    noInterrupts();
 
     bUpdateFlags = bUpdateFlagsShared;
 
@@ -122,7 +134,25 @@ void loop() {
       unChannel2In = CHANNEL_2_IN_PWM;
     }
 
+    if (bUpdateFlags & ENCODER_FL_FLAG) {
+      FL_DT = FL_time_pres - FL_time_prev;
+    }
+
+    if (bUpdateFlags & ENCODER_FR_FLAG) {
+      FR_DT = FL_time_pres - FR_time_prev;
+    }
+
+    if (bUpdateFlags & ENCODER_BL_FLAG) {
+      BL_DT = BL_time_pres - BL_time_prev;
+    }
+
+    if (bUpdateFlags & ENCODER_BR_FLAG) {
+      BR_DT = BR_time_pres - BR_time_prev;
+    }
+
     bUpdateFlagsShared = 0;
+
+    interrupts();
   }
 
   servo_angle = servo_enc_count * 0.3515625; //change to calculate function that calculates all angles and velocities
@@ -161,10 +191,21 @@ void loop() {
         }
         last_received = millis();
         serial_started = true;
-      }else if(millis() - last_received > TIME_DELAY && serial_started){
+      }
+      else if(millis() - last_received > TIME_DELAY && serial_started){
         throttle_write = 1000;
         steering_write = 1500;
-       }
+      }
+
+      if (millis() - write_time >= WRITE_INTERVAL) {
+        write_time = millis();
+
+        // Send wheel encoder counts
+        char buff[100];
+        // FL, FR, BL, BR
+        sprintf(buff, "%i,%i,%i,%i", wheel_enc_count_FL, wheel_enc_count_FR, wheel_enc_count_BL, wheel_enc_count_BR);
+        SerialUSB.println(buff);
+      }
     }
 
     servoChannel2.writeMicroseconds(throttle_write);
@@ -265,30 +306,30 @@ void calc_C_servo() {
   servo_enc_count += direction_servo;
 }
 
-//void MEASURE_FL() {
-//  wheel_enc_count_FL++;
-//  FL_time_prev = FL_time_pres;
-//  FL_time_pres = micros();
-//  bUpdateFlagsShared |= ENCODER_FL_FLAG;
-//}
-//
-//void MEASURE_FR() {
-//  wheel_enc_count_FR++;
-//  FR_time_prev = FR_time_pres;
-//  FR_time_pres = micros();
-//  bUpdateFlagsShared |= ENCODER_FR_FLAG;
-//}
-//
-//void MEASURE_BL() {
-//  wheel_enc_count_BL++;
-//  BL_time_prev = BL_time_pres;
-//  BL_time_pres = micros();
-//  bUpdateFlagsShared |= ENCODER_BL_FLAG;
-//}
-//
-//void MEASURE_BR() {
-//  wheel_enc_count_BR++;
-//  BR_time_prev = BR_time_pres;
-//  BR_time_pres = micros();
-//  bUpdateFlagsShared |= ENCODER_BR_FLAG;
-//}
+void MEASURE_FL() {
+  wheel_enc_count_FL++;
+  FL_time_prev = FL_time_pres;
+  FL_time_pres = micros();
+  bUpdateFlagsShared |= ENCODER_FL_FLAG;
+}
+
+void MEASURE_FR() {
+  wheel_enc_count_FR++;
+  FR_time_prev = FR_time_pres;
+  FR_time_pres = micros();
+  bUpdateFlagsShared |= ENCODER_FR_FLAG;
+}
+
+void MEASURE_BL() {
+  wheel_enc_count_BL++;
+  BL_time_prev = BL_time_pres;
+  BL_time_pres = micros();
+  bUpdateFlagsShared |= ENCODER_BL_FLAG;
+}
+
+void MEASURE_BR() {
+  wheel_enc_count_BR++;
+  BR_time_prev = BR_time_pres;
+  BR_time_pres = micros();
+  bUpdateFlagsShared |= ENCODER_BR_FLAG;
+}
