@@ -136,31 +136,31 @@ class ArduinoInterfaceNode(MPClabNode):
             # self.interface_mode = 'finished'
 
         # Now try to read from serial port for wheel encoder measurements
-        read_success = False
-        while self.serial.in_waiting > 0:
-            msg = self.serial.read_until(expected='\r\n'.encode('ascii'), size=50).decode('ascii')
-            # self.get_logger().info(msg)
-            count_strs = msg.split(',')
-            try:
-                # Try to convert strings to integers
-                counts = [int(s) for s in count_strs]
-            except:
-                continue
-
-            # If we get 4 integers, consider that as a successful read
-            if len(counts) == 4:
-                self.serial.reset_input_buffer()
-                read_success = True
-                break
-
-        if not read_success:
-            self.get_logger().info('===== Serial comms warning: could not read from Arduino =====')
-        else:
-            self.encoder.t = t
-            self.encoder.fl, self.encoder.fr, self.encoder.bl, self.encoder.br = counts
-        
-            encoder_msg = self.populate_msg(Encoder(), self.encoder)
-            self.encoder_pub.publish(encoder_msg)
+        # read_success = False
+        # while self.serial.in_waiting > 0:
+        #     msg = self.serial.read_until(expected='\r\n'.encode('ascii'), size=50).decode('ascii')
+        #     # self.get_logger().info(msg)
+        #     count_strs = msg.split(',')
+        #     try:
+        #         # Try to convert strings to integers
+        #         counts = [int(s) for s in count_strs]
+        #     except:
+        #         continue
+        #
+        #     # If we get 4 integers, consider that as a successful read
+        #     if len(counts) == 4:
+        #         self.serial.reset_input_buffer()
+        #         read_success = True
+        #         break
+        #
+        # if not read_success:
+        #     self.get_logger().info('===== Serial comms warning: could not read from Arduino =====')
+        # else:
+        #     self.encoder.t = t
+        #     self.encoder.fl, self.encoder.fr, self.encoder.bl, self.encoder.br = counts
+        #
+        #     encoder_msg = self.populate_msg(Encoder(), self.encoder)
+        #     self.encoder_pub.publish(encoder_msg)
 
     def send_serial(self, pwm: VehicleActuation):
         serial_msg = '& {} {}\r'.format(int(pwm.u_a), int(pwm.u_steer))
