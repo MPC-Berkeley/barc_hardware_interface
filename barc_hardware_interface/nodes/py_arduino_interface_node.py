@@ -7,7 +7,7 @@ from serial import Serial
 import numpy as np
 
 from mpclab_common.msg import State, Actuation, Encoder
-from mpclab_common.pytypes import VehicleActuation, VehicleEncoder
+from mpclab_common.pytypes import VehicleActuation
 from mpclab_common.mpclab_base_nodes import MPClabNode
 
 SHOW_MSG_TRANSFER_WARNINGS = False
@@ -60,7 +60,7 @@ class ArduinoInterfaceNode(MPClabNode):
         self.throttle_pwm_range_u = self.throttle_pwm_max - self.throttle_pwm_neutral
         self.throttle_pwm_range_l = self.throttle_pwm_neutral - self.throttle_pwm_min
 
-        self.encoder = VehicleEncoder()
+        # self.encoder = VehicleEncoder()
         self.wheel_radius = 0.0325
 
         # Make serial connection to Arduino
@@ -80,11 +80,11 @@ class ArduinoInterfaceNode(MPClabNode):
             self.control_callback,
             qos_profile_sensor_data)
 
-        self.encoder_pub = self.create_publisher(
-            Encoder,
-            'encoder',
-            qos_profile_sensor_data)
-        self.encoder_msg = Encoder()
+        # self.encoder_pub = self.create_publisher(
+        #     Encoder,
+        #     'encoder',
+        #     qos_profile_sensor_data)
+        # self.encoder_msg = Encoder()
 
         self.wait_time = 1.0
         self.interface_mode = 'init'
@@ -123,7 +123,7 @@ class ArduinoInterfaceNode(MPClabNode):
             if np.abs(throttle_accel) <= self.throttle_deadband:
                 self.pwm.u_a = self.throttle_pwm_neutral
             elif throttle_accel > self.throttle_deadband:
-                self.pwm.u_a = (1.0 + 6.5*throttle_accel)*self.throttle_pwm_range_u/90.0 + self.throttle_pwm_neutral
+                self.pwm.u_a = (15*throttle_accel)*self.throttle_pwm_range_u/90.0 + self.throttle_pwm_neutral
             elif throttle_accel < -self.throttle_deadband:
                 self.pwm.u_a = (3.5 + 6.73*throttle_accel)*self.throttle_pwm_range_l/90.0+ self.throttle_pwm_neutral
             self.pwm.u_a = self.saturate_pwm(self.pwm.u_a, self.throttle_pwm_max, self.throttle_pwm_min)
