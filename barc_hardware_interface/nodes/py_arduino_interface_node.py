@@ -6,7 +6,7 @@ from rclpy.qos import qos_profile_sensor_data
 from serial import Serial
 import numpy as np
 
-from mpclab_common.msg import State, Actuation, Encoder
+from mpclab_common.msg import VehicleStateMsg, VehicleActuationMsg, EncoderMsg
 from mpclab_common.pytypes import VehicleActuation
 from mpclab_common.mpclab_base_nodes import MPClabNode
 
@@ -75,7 +75,7 @@ class ArduinoInterfaceNode(MPClabNode):
         self.pwm = VehicleActuation(u_a=self.throttle_pwm_neutral, u_steer=self.steering_pwm_neutral)
 
         self.control_sub = self.create_subscription(
-            Actuation,
+            VehicleActuationMsg,
             'ecu',
             self.control_callback,
             qos_profile_sensor_data)
