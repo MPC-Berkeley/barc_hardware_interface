@@ -21,7 +21,7 @@ float throttle_read = 1500;
 float steering_read = 1500;
 float throttle_write = 1500;
 float steering_write = 1500;
-float receiverStateVar = LOW;
+//float receiverStateVar = HIGH;
 float str_prev_2 = 1500;
 float str_prev_1 = 1500;
 float thr_prev_2 = 1500;
@@ -59,7 +59,7 @@ volatile uint32_t BR_time_pres = 0;
 #define FR_IN_PIN 44
 #define BL_IN_PIN 46
 #define BR_IN_PIN 48
-#define RECEIVER_STATE_PIN 30
+//#define RECEIVER_STATE_PIN 30
 #define PHASE_A_servo 32
 #define PHASE_B_servo 34
 #define PHASE_C_servo 36
@@ -90,7 +90,7 @@ void setup() {
   servoChannel1.attach(CHANNEL1_OUT_PIN);
   servoChannel2.attach(CHANNEL2_OUT_PIN);
 
-  pinMode(RECEIVER_STATE_PIN, INPUT);
+//  pinMode(RECEIVER_STATE_PIN, INPUT);
   pinMode(FL_IN_PIN, INPUT_PULLUP);
   pinMode(FR_IN_PIN, INPUT_PULLUP);
   pinMode(BL_IN_PIN, INPUT_PULLUP);
@@ -114,7 +114,7 @@ void setup() {
 }
 
 void loop() {
-  receiverStateVar = digitalRead(RECEIVER_STATE_PIN);
+//  receiverStateVar = digitalRead(RECEIVER_STATE_PIN);
 
   static uint32_t unChannel1In;
   static uint32_t unChannel2In;
@@ -161,52 +161,52 @@ void loop() {
   steering_read = CHANNEL_1_IN_PWM;
   throttle_read = CHANNEL_2_IN_PWM;
 
-  if (receiverStateVar == LOW) {
-    throttle_write = throttle_read;
-    steering_write = steering_read;
+//  if (receiverStateVar == LOW) {
+//    throttle_write = throttle_read;
+//    steering_write = steering_read;
+//
+//    servoChannel2.writeMicroseconds(throttle_write);
+//    servoChannel1.writeMicroseconds(steering_write);
+//  } 
+//  else if (receiverStateVar == HIGH) {
 
-    servoChannel2.writeMicroseconds(throttle_write);
-    servoChannel1.writeMicroseconds(steering_write);
+  if (TESTING_STATE == true) {
+    throttle_write = 1500;
+    steering_write = 1500;
   } 
-  else if (receiverStateVar == HIGH) {
-
-    if (TESTING_STATE == true) {
-      throttle_write = 1500;
-      steering_write = 1500;
-    } 
-    else {
-      // NEW REQUIRED FORMAT: "HANDSHAKE" "PWMTHROTTLE" "STEERINGIN"
-      // (neutral formatting): & 1500 1500
-      if (SerialUSB.available()) {
-        byte size = SerialUSB.readBytesUntil('\r', receivedData, 50); //reads serial data into buffer and times out after 100ms
-        receivedData[size] = 0; //end of the string can be specified with a 0.
-        char *s = strtok(receivedData, " "); //allows string to be broken into tokens by " ".
-        if (s[0] == handshake) {
-          s = strtok(NULL, " ");
-          if (s != NULL) throttle_read = atoi(s); //sets variable to received data and converts ASCII to integer if message is not empty
-          s = strtok(NULL, " ");
-          if (s != NULL) steering_read = atoi(s); //sets variable to received data and converts ASCII to integer if message is not empty
-          steering_write = steering_read;
-          throttle_write = throttle_read;
-        }
-        last_received = millis();
-        serial_started = true;
+  else {
+    // NEW REQUIRED FORMAT: "HANDSHAKE" "PWMTHROTTLE" "STEERINGIN"
+    // (neutral formatting): & 1500 1500
+    if (SerialUSB.available()) {
+      byte size = SerialUSB.readBytesUntil('\r', receivedData, 50); //reads serial data into buffer and times out after 100ms
+      receivedData[size] = 0; //end of the string can be specified with a 0.
+      char *s = strtok(receivedData, " "); //allows string to be broken into tokens by " ".
+      if (s[0] == handshake) {
+        s = strtok(NULL, " ");
+        if (s != NULL) throttle_read = atoi(s); //sets variable to received data and converts ASCII to integer if message is not empty
+        s = strtok(NULL, " ");
+        if (s != NULL) steering_read = atoi(s); //sets variable to received data and converts ASCII to integer if message is not empty
+        steering_write = steering_read;
+        throttle_write = throttle_read;
       }
-      else if(millis() - last_received > TIME_DELAY && serial_started){
-        throttle_write = 1000;
-        steering_write = 1500;
-      }
-
-      if (millis() - write_time >= WRITE_INTERVAL) {
-        write_time = millis();
-
-        // Send wheel encoder counts
-        char buff[100];
-        // FL, FR, BL, BR
-        sprintf(buff, "%i,%i,%i,%i", wheel_enc_count_FL, wheel_enc_count_FR, wheel_enc_count_BL, wheel_enc_count_BR);
-        SerialUSB.println(buff);
-      }
+      last_received = millis();
+      serial_started = true;
     }
+    else if(millis() - last_received > TIME_DELAY && serial_started){
+      throttle_write = 1000;
+      steering_write = 1500;
+    }
+
+//    if (millis() - write_time >= WRITE_INTERVAL) {
+//      write_time = millis();
+//
+//      // Send wheel encoder counts
+//      char buff[100];
+//      // FL, FR, BL, BR
+//      sprintf(buff, "%i,%i,%i,%i", wheel_enc_count_FL, wheel_enc_count_FR, wheel_enc_count_BL, wheel_enc_count_BR);
+//      SerialUSB.println(buff);
+//    }
+//    }
 
     servoChannel2.writeMicroseconds(throttle_write);
     servoChannel1.writeMicroseconds(steering_write);
