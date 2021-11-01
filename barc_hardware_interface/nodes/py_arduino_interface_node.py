@@ -117,7 +117,7 @@ class ArduinoInterfaceNode(MPClabNode):
             #     self.pwm.u_steer = steer_rad * (180/np.pi) * self.pwm_gain + self.steering_pwm_neutral
             # elif steer_rad < -self.steering_deadband:
             #     self.pwm.u_steer = steer_rad * (180/np.pi) * self.pwm_gain + self.steering_pwm_neutral
-            self.pwm.u_steer = steer_rad
+            self.pwm.u_steer = steer_rad * 100 
             self.pwm.u_steer = self.saturate_pwm(self.pwm.u_steer, self.steering_pwm_max, self.steering_pwm_min)
 
             # Map from desired acceleration to PWM
@@ -127,7 +127,7 @@ class ArduinoInterfaceNode(MPClabNode):
             #     self.pwm.u_a = (15*throttle_accel)*self.throttle_pwm_range_u/90.0 + self.throttle_pwm_neutral
             # elif throttle_accel < -self.throttle_deadband:
             #     self.pwm.u_a = (3.5 + 6.73*throttle_accel)*self.throttle_pwm_range_l/90.0+ self.throttle_pwm_neutral
-            self.pwm.u_a = throttle_accel
+            self.pwm.u_a = throttle_accel * 100
             self.pwm.u_a = self.saturate_pwm(self.pwm.u_a, self.throttle_pwm_max, self.throttle_pwm_min)
 
         # Try sending pwm values over serial to Arduino

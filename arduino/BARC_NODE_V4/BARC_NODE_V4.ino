@@ -83,6 +83,54 @@ volatile uint32_t FR_DT;
 volatile uint32_t BL_DT;
 volatile uint32_t BR_DT;
 
+/************ PID Controller ************/
+
+// Gains
+double kp = 2;
+double ki = 5;
+double kd = 0;
+
+//
+double vref, u_throttle;
+double e, last_e, cum_e, der_e;
+unsigned long currentTime, previousTime;
+double elapsedTime;
+double u_min = 1500, u_max = 1750 ; 
+
+double anti_windup(double y){
+  double ur = cum_e * ki ; 
+  e = vref - y ;
+  double new_e ; 
+  
+  if ( (ur > u_max && ki * e > 0) 
+  || (ur < u_min && ki*e < 0 ) ){
+    new_e = 0; 
+  }
+  else{
+    new_e = e; 
+  }
+  
+  return new_e;
+}
+
+double stepPID(double y){     
+  currentTime = millis(); 
+  elapsedTime = (double)(currentTime - previousTime);
+
+  e = ref - y;
+  cum_e += anti_windup(y) * elapsedTime;
+  der_e = (e - last_e)/elapsedTime;
+
+  double u = kp*e + ki*cum_e + kd*der_e;
+
+  last_e = e;                            
+  previousTime = currentTime;            
+
+  return u 
+}
+
+/****************************************/
+
 void setup() {
   // SerialUSB is the Arduino Due Native USB Port
   SerialUSB.begin(115200);
@@ -161,15 +209,6 @@ void loop() {
   steering_read = CHANNEL_1_IN_PWM;
   throttle_read = CHANNEL_2_IN_PWM;
 
-//  if (receiverStateVar == LOW) {
-//    throttle_write = throttle_read;
-//    steering_write = steering_read;
-//
-//    servoChannel2.writeMicroseconds(throttle_write);
-//    servoChannel1.writeMicroseconds(steering_write);
-//  } 
-//  else if (receiverStateVar == HIGH) {
-
   if (TESTING_STATE == true) {
     throttle_write = 1500;
     steering_write = 1500;
@@ -188,6 +227,7 @@ void loop() {
         if (s != NULL) steering_read = atoi(s); //sets variable to received data and converts ASCII to integer if message is not empty
         steering_write = steering_read;
         throttle_write = throttle_read;
+ 
       }
       last_received = millis();
       serial_started = true;
@@ -197,18 +237,10 @@ void loop() {
       steering_write = 1500;
     }
 
-//    if (millis() - write_time >= WRITE_INTERVAL) {
-//      write_time = millis();
-//
-//      // Send wheel encoder counts
-//      char buff[100];
-//      // FL, FR, BL, BR
-//      sprintf(buff, "%i,%i,%i,%i", wheel_enc_count_FL, wheel_enc_count_FR, wheel_enc_count_BL, wheel_enc_count_BR);
-//      SerialUSB.println(buff);
-//    }
-//    }
-
-    servoChannel2.writeMicroseconds(throttle_write);
+    /*desired speed*/
+    vref = (double) throttle_read / 100 ;
+    u_throttle = stepPID(vref) ; 
+    servoChannel2.writeMicroseconds(u_throttle);
     servoChannel1.writeMicroseconds(steering_write);
 
   }
