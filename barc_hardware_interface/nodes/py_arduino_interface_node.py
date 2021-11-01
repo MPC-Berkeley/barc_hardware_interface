@@ -111,21 +111,23 @@ class ArduinoInterfaceNode(MPClabNode):
             throttle_accel, steer_rad = self.control.u_a, -self.control.u_steer
 
             # Map from desired steering angle to PWM
-            if np.abs(steer_rad) <= self.steering_deadband:
-                self.pwm.u_steer = self.steering_pwm_neutral
-            elif steer_rad > self.steering_deadband:
-                self.pwm.u_steer = steer_rad * (180/np.pi) * self.pwm_gain + self.steering_pwm_neutral
-            elif steer_rad < -self.steering_deadband:
-                self.pwm.u_steer = steer_rad * (180/np.pi) * self.pwm_gain + self.steering_pwm_neutral
+            # if np.abs(steer_rad) <= self.steering_deadband:
+            #     self.pwm.u_steer = self.steering_pwm_neutral
+            # elif steer_rad > self.steering_deadband:
+            #     self.pwm.u_steer = steer_rad * (180/np.pi) * self.pwm_gain + self.steering_pwm_neutral
+            # elif steer_rad < -self.steering_deadband:
+            #     self.pwm.u_steer = steer_rad * (180/np.pi) * self.pwm_gain + self.steering_pwm_neutral
+            self.pwm.u_steer = steer_rad
             self.pwm.u_steer = self.saturate_pwm(self.pwm.u_steer, self.steering_pwm_max, self.steering_pwm_min)
 
             # Map from desired acceleration to PWM
-            if np.abs(throttle_accel) <= self.throttle_deadband:
-                self.pwm.u_a = self.throttle_pwm_neutral
-            elif throttle_accel > self.throttle_deadband:
-                self.pwm.u_a = (15*throttle_accel)*self.throttle_pwm_range_u/90.0 + self.throttle_pwm_neutral
-            elif throttle_accel < -self.throttle_deadband:
-                self.pwm.u_a = (3.5 + 6.73*throttle_accel)*self.throttle_pwm_range_l/90.0+ self.throttle_pwm_neutral
+            # if np.abs(throttle_accel) <= self.throttle_deadband:
+            #     self.pwm.u_a = self.throttle_pwm_neutral
+            # elif throttle_accel > self.throttle_deadband:
+            #     self.pwm.u_a = (15*throttle_accel)*self.throttle_pwm_range_u/90.0 + self.throttle_pwm_neutral
+            # elif throttle_accel < -self.throttle_deadband:
+            #     self.pwm.u_a = (3.5 + 6.73*throttle_accel)*self.throttle_pwm_range_l/90.0+ self.throttle_pwm_neutral
+            self.pwm.u_a = throttle_accel
             self.pwm.u_a = self.saturate_pwm(self.pwm.u_a, self.throttle_pwm_max, self.throttle_pwm_min)
 
         # Try sending pwm values over serial to Arduino
@@ -134,33 +136,6 @@ class ArduinoInterfaceNode(MPClabNode):
         except Exception as e:
             self.get_logger().info('===== Serial comms error: %s =====' % e)
             # self.interface_mode = 'finished'
-
-        # Now try to read from serial port for wheel encoder measurements
-        # read_success = False
-        # while self.serial.in_waiting > 0:
-        #     msg = self.serial.read_until(expected='\r\n'.encode('ascii'), size=50).decode('ascii')
-        #     # self.get_logger().info(msg)
-        #     count_strs = msg.split(',')
-        #     try:
-        #         # Try to convert strings to integers
-        #         counts = [int(s) for s in count_strs]
-        #     except:
-        #         continue
-        #
-        #     # If we get 4 integers, consider that as a successful read
-        #     if len(counts) == 4:
-        #         self.serial.reset_input_buffer()
-        #         read_success = True
-        #         break
-        #
-        # if not read_success:
-        #     self.get_logger().info('===== Serial comms warning: could not read from Arduino =====')
-        # else:
-        #     self.encoder.t = t
-        #     self.encoder.fl, self.encoder.fr, self.encoder.bl, self.encoder.br = counts
-        #
-        #     encoder_msg = self.populate_msg(Encoder(), self.encoder)
-        #     self.encoder_pub.publish(encoder_msg)
 
     def send_serial(self, pwm: VehicleActuation):
         serial_msg = '& {} {}\r'.format(int(pwm.u_a), int(pwm.u_steer))
