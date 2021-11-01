@@ -1,4 +1,4 @@
-
+#include <Arduino.h>
 #include "Servo.h"
 
 int TESTING_STATE = false; //test between receiving Nvidia Jetson Signal and Writing Constant PWM
@@ -86,8 +86,8 @@ volatile uint32_t BR_DT;
 /************ PID Controller ************/
 
 // Gains
-double kp = 2;
-double ki = 5;
+double kp = 260;
+double ki = 1000;
 double kd = 0;
 
 //
@@ -117,7 +117,7 @@ double stepPID(double y){
   currentTime = millis(); 
   elapsedTime = (double)(currentTime - previousTime);
 
-  e = ref - y;
+  e = vref - y;
   cum_e += anti_windup(y) * elapsedTime;
   der_e = (e - last_e)/elapsedTime;
 
@@ -126,7 +126,7 @@ double stepPID(double y){
   last_e = e;                            
   previousTime = currentTime;            
 
-  return u 
+  return u;
 }
 
 /****************************************/
