@@ -38,10 +38,11 @@ endif()
 
 install(PROGRAMS
   nodes/py_arduino_interface_node.py
+  nodes/test_interface_node.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
 ament_python_install_package(${PROJECT_NAME}
     PACKAGE_DIR lib/${PROJECT_NAME})
-    
+
 ament_package()

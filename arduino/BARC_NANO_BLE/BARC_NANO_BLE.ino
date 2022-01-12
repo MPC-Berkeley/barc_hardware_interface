@@ -12,6 +12,9 @@
 
 Servo steering_servo;
 
+#define THROTTLE_MSG_MAX 1900
+#define THROTTLE_MSG_MIN 1100
+#define THROTTLE_MSG_OFF 1500
 #define THROTTLE_MAX 255
 #define THROTTLE_MIN 0
 #define THROTTLE_OFF 0
@@ -33,9 +36,6 @@ boolean output_remote  = false;
 unsigned int throttle_v = THROTTLE_OFF;
 boolean throttle_dir = true;
 unsigned int steering_us = STEERING_OFF;
-unsigned int remote_throttle_v = THROTTLE_OFF;
-boolean remote_throttle_dir = true;
-unsigned int remote_steering_us = STEERING_OFF;
 
 #define ENC_FL_A A5
 #define ENC_FL_B A6
@@ -235,16 +235,9 @@ void reset_actuators(){
 
 void update_actuators(){
   if (output_enabled){
-    if (output_remote) {
-      steering_servo.writeMicroseconds(remote_steering_us);
-      digitalWrite(DIRECTION_PIN, remote_throttle_dir);
-      analogWrite(THROTTLE_PIN, remote_throttle_v);
-    }
-    else {
-      steering_servo.writeMicroseconds(steering_us);
-      digitalWrite(DIRECTION_PIN, throttle_dir);
-      analogWrite(THROTTLE_PIN, throttle_v);
-    }
+    steering_servo.writeMicroseconds(steering_us);
+    digitalWrite(DIRECTION_PIN, throttle_dir);
+    analogWrite(THROTTLE_PIN, throttle_v);
   }
   else{
     steering_servo.writeMicroseconds(STEERING_OFF);
@@ -252,8 +245,20 @@ void update_actuators(){
   }
 }
 
-void write_throttle(unsigned int v){
-  throttle_v = min(max(v, THROTTLE_MIN), THROTTLE_MAX);
+void write_throttle(unsigned int m){
+  int throttle_msg = min(max(m, THROTTLE_MSG_MIN), THROTTLE_MSG_MAX);
+  if (throttle_msg > THROTTLE_MSG_OFF){
+    throttle_dir = true;
+    throttle_v = round(THROTTLE_MAX*float(throttle_msg)/float(THROTTLE_MSG_MAX-THROTTLE_MSG_OFF));
+  }
+  else if (throttle_msg < THROTTLE_MSG_OFF){
+    throttle_dir = false;
+    throttle_v = round(THROTTLE_MAX*float(throttle_msg)/float(THROTTLE_MSG_OFF-THROTTLE_MSG_MIN));
+  }
+  else {
+    throttle_dir = true;
+    throttle_v = THROTTLE_OFF;
+  }
   if (DEBUG) {
     Serial.print("Wrote Throttle ");
     Serial.println(throttle_v);
