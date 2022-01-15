@@ -158,7 +158,7 @@ void setup() {
 void loop() {
 
   /********* motor ***********/
-   analogWrite(PWM, u.throttle);
+   analogWrite(PWM, 0);
    digitalWrite(DIR, LOW);
   /**************************/
   
@@ -231,7 +231,5 @@ ref_t parse_command(){
     return ref ; 
 
 }
-
-double 
 
 /****************************************/

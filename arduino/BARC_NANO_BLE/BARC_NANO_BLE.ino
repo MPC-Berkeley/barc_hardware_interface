@@ -1,4 +1,4 @@
-#include "Servo.h"
+#include <Servo.h>
 #include <QuadratureEncoder.h>
 
 #define DEBUG        0
@@ -18,23 +18,23 @@ Servo steering_servo;
 #define THROTTLE_MAX 255
 #define THROTTLE_MIN 0
 #define THROTTLE_OFF 0
-
+#define THROTTLE_FORWARD LOW
+#define THROTTLE_BACKWARD HIGH
 
 #define STEERING_MAX 1900
 #define STEERING_MIN 1100
 #define STEERING_OFF 1500
 
-
 // Serial Port Settings
-#define BAUD_RATE         115200    //Serial Port Baud Rate
-#define NEWLINE           '\n'      //Serial newline char
-#define byteCount         5         //Serial bytes per command
-#define SERIAL_TIMEOUT    500      //Serial timeout in ms
+#define BAUD_RATE         115200    // Serial Port Baud Rate
+#define NEWLINE           '\n'      // Serial newline char
+#define byteCount         5         // Serial bytes per command
+#define SERIAL_TIMEOUT    500      // Serial timeout in ms
+#define NUM_FLOATING_POINT_DECIMALS 3 // Number of decimal places when printing floating point numbers
 
 boolean output_enabled = true;
-boolean output_remote  = false;
 unsigned int throttle_v = THROTTLE_OFF;
-boolean throttle_dir = true;
+boolean throttle_dir = THROTTLE_FORWARD;
 unsigned int steering_us = STEERING_OFF;
 
 #define ENC_FL_A A5
@@ -46,6 +46,7 @@ unsigned int steering_us = STEERING_OFF;
 #define ENC_RR_A D11 // ! swapped order
 #define ENC_RR_B D12
 
+double v_fr, v_fl, v_rr, v_rl;
 Encoders fr(ENC_FR_A, ENC_FR_B);
 Encoders fl(ENC_FL_A, ENC_FL_B);
 Encoders rl(ENC_RL_A, ENC_RL_B);
@@ -55,8 +56,6 @@ void setup() {
   Serial.begin(BAUD_RATE);
   setup_actuators();
   reset_actuators();
-//  setup_tachs();
-//  reset_tachs();
   
 }
 
@@ -65,8 +64,6 @@ void loop() {
   update_actuators();
   //print_tachs();
 }
-
-
 
 /* Serial communication protocol.
  *  See provided text document for details
@@ -175,7 +172,6 @@ void check_serial(){
           break;
           
         case '1': // read steering output
-          Serial.println("Read Steering output");
           if (output_enabled){
             Serial.print("B1");
             Serial.println(steering_us, HEX);
@@ -184,6 +180,21 @@ void check_serial(){
             Serial.print("B1");
             Serial.println(STEERING_OFF, HEX);
           }
+          break;
+
+        case '3': // read encoder
+          v_fr = fr.getSpeedAvg();
+          v_fl = fl.getSpeedAvg();
+          v_rr = rr.getSpeedAvg();
+          v_rl = rl.getSpeedAvg(); 
+          Serial.print("B3a");
+          Serial.print(v_fl, NUM_FLOATING_POINT_DECIMALS);
+          Serial.print("b");
+          Serial.print(v_fr, NUM_FLOATING_POINT_DECIMALS);
+          Serial.print("c");
+          Serial.print(v_rl, NUM_FLOATING_POINT_DECIMALS);
+          Serial.print("d");
+          Serial.println(v_rr, NUM_FLOATING_POINT_DECIMALS);
           break;
           
         default:
@@ -227,13 +238,17 @@ void setup_actuators(){
 void reset_actuators(){
   steering_servo.writeMicroseconds(STEERING_OFF);
   digitalWrite(MOTOR_SLEEP, HIGH); // Motor driver on
-  digitalWrite(DIRECTION_PIN, HIGH); // Forward by default
+  digitalWrite(DIRECTION_PIN, THROTTLE_FORWARD); // Forward by default
   analogWrite(THROTTLE_PIN, THROTTLE_OFF);
   delay(3000);
   update_actuators();
 }
 
 void update_actuators(){
+  if (DEBUG){
+    Serial.print("Output enabled: ");
+    Serial.println(output_enabled);
+  }
   if (output_enabled){
     steering_servo.writeMicroseconds(steering_us);
     digitalWrite(DIRECTION_PIN, throttle_dir);
@@ -248,15 +263,15 @@ void update_actuators(){
 void write_throttle(unsigned int m){
   int throttle_msg = min(max(m, THROTTLE_MSG_MIN), THROTTLE_MSG_MAX);
   if (throttle_msg > THROTTLE_MSG_OFF){
-    throttle_dir = true;
-    throttle_v = round(THROTTLE_MAX*float(throttle_msg)/float(THROTTLE_MSG_MAX-THROTTLE_MSG_OFF));
+    throttle_dir = THROTTLE_FORWARD;
+    throttle_v = round(THROTTLE_MAX*float(throttle_msg-THROTTLE_MSG_OFF)/float(THROTTLE_MSG_MAX-THROTTLE_MSG_OFF));
   }
   else if (throttle_msg < THROTTLE_MSG_OFF){
-    throttle_dir = false;
-    throttle_v = round(THROTTLE_MAX*float(throttle_msg)/float(THROTTLE_MSG_OFF-THROTTLE_MSG_MIN));
+    throttle_dir = THROTTLE_BACKWARD;
+    throttle_v = round(THROTTLE_MAX*float(THROTTLE_MSG_OFF-throttle_msg)/float(THROTTLE_MSG_OFF-THROTTLE_MSG_MIN));
   }
   else {
-    throttle_dir = true;
+    throttle_dir = THROTTLE_FORWARD;
     throttle_v = THROTTLE_OFF;
   }
   if (DEBUG) {

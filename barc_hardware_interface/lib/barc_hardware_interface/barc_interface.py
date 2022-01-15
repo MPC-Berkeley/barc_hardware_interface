@@ -2,9 +2,8 @@ from serial import Serial
 from serial.tools import list_ports
 import numpy as np
 from dataclasses import dataclass, field
-import pigpio
 
-from barc3d.pytypes import VehicleActuation, VehicleState, PythonMsg, DriveState
+from mpclab_common.pytypes import VehicleActuation, VehicleState, PythonMsg
 
 @dataclass
 class BarcArduinoInterfaceConfig():
@@ -12,13 +11,14 @@ class BarcArduinoInterfaceConfig():
     port: str   = field(default = None) # default to autoscan
     baud: int   = field(default = 115200)
     dt:   float = field(default = 0.01)
+    require_echo: bool = field(default = False)
 
-    steering_max: int = field(default = 1999)
-    steering_min: int = field(default = 1000)
+    steering_max: int = field(default = 1900)
+    steering_min: int = field(default = 1100)
     steering_off: int = field(default = 1500)
 
-    throttle_max: int = field(default = 1999)
-    throttle_min: int = field(default = 1000)
+    throttle_max: int = field(default = 1900)
+    throttle_min: int = field(default = 1100)
     throttle_off: int = field(default = 1500)
 
 
@@ -43,7 +43,7 @@ class BarcArduinoInterface():
 
     def __init__(self, config: BarcArduinoInterfaceConfig = BarcArduinoInterfaceConfig()):
         self.config = config
-        self.hw_state = DriveState()
+        #self.hw_state = DriveState()
         self.start()
         return
 
@@ -72,7 +72,7 @@ class BarcArduinoInterface():
 
     def step(self, state:VehicleState):
         self.write_output(state.u)
-        state.hw = self.hw_state.copy()
+        #state.hw = self.hw_state.copy()
         return
 
     def write_output(self, u: VehicleActuation):
@@ -82,20 +82,28 @@ class BarcArduinoInterface():
 
         steering = self.config.steering_off + steering_gain * u.u_steer
         steering = max(min(steering, self.config.steering_max), self.config.throttle_min)
-
-        self.hw_state.throttle = throttle
-        self.hw_state.steering = steering
-        self.hw_state.brake = 0
-
-
+           
+        self.serial.flushOutput()
         self.serial.write(b'A0%03d\n'%(throttle - 1000))
         self.serial.write(b'A1%03d\n'%(steering - 1000))
 
         return
-
+    
+    def write_raw_commands(self, throttle: int, steering: int):
+        throttle = max(min(throttle, self.config.throttle_max), self.config.throttle_min)
+        steering = max(min(steering, self.config.steering_max), self.config.throttle_min)
+        
+        self.serial.flushOutput()
+        self.serial.write(b'A0%03d\n'%(throttle - 1000))
+        self.serial.write(b'A1%03d\n'%(steering - 1000))
+    
+    def write_raw_serial(self, msg: str):
+        self.serial.write(msg.encode('ascii'))
+        
     def reset_output(self):
+        self.serial.flushOutput()
         self.serial.write(b'A0%03d\n'%(self.config.throttle_off-1000))
-        self.serial.write(b'A1%03d\n'%(self.concig.steering_off-1000))
+        self.serial.write(b'A1%03d\n'%(self.config.steering_off-1000))
         return
 
     def enable_output(self):
@@ -105,6 +113,24 @@ class BarcArduinoInterface():
     def disable_output(self):
         self.serial.write(b'AB000\n')
         return
+    
+    def read_encoders(self):
+        self.serial.flushOutput()
+        self.serial.flushInput()
+        self.serial.write(b'B3000\n')
+        
+        msg = self.serial.read_until(expected='\r\n'.encode('ascii'), size=50).decode('ascii')
+        fl_start = msg.find('a')
+        fr_start = msg.find('b')
+        rl_start = msg.find('c')
+        rr_start = msg.find('d')
+        if fl_start < 0 or fr_start < 0 or rl_start < 0 or rr_start < 0:
+            return None
+        v_fl = float(msg[fl_start+1:fr_start])
+        v_fr = float(msg[fr_start+1:rl_start])
+        v_rl = float(msg[rl_start+1:rr_start])
+        v_rr = float(msg[rr_start+1:])
+        return v_fl, v_fr, v_rl, v_rr
 
 
 class BarcPiInterface():
