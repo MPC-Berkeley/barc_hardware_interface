@@ -39,6 +39,7 @@ endif()
 install(PROGRAMS
   nodes/py_arduino_interface_node.py
   nodes/test_interface_node.py
+  nodes/tmp_interface_node.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
