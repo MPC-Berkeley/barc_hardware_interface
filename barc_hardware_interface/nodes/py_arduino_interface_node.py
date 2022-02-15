@@ -114,9 +114,11 @@ class ArduinoInterfaceNode(MPClabNode):
             if np.abs(steer_rad) <= self.steering_deadband:
                 self.pwm.u_steer = self.steering_pwm_neutral
             elif steer_rad > self.steering_deadband:
-                self.pwm.u_steer = steer_rad * (180/np.pi) * self.pwm_gain + self.steering_pwm_neutral
+                # self.pwm.u_steer = steer_rad * (180/np.pi) * self.pwm_gain + self.steering_pwm_neutral
+                self.pwm.u_steer = self.angle_to_pwm(steer_rad)
             elif steer_rad < -self.steering_deadband:
-                self.pwm.u_steer = steer_rad * (180/np.pi) * self.pwm_gain + self.steering_pwm_neutral
+                # self.pwm.u_steer = steer_rad * (180/np.pi) * self.pwm_gain + self.steering_pwm_neutral
+                self.pwm.u_steer = self.angle_to_pwm(steer_rad)
             self.pwm.u_steer = self.saturate_pwm(self.pwm.u_steer, self.steering_pwm_max, self.steering_pwm_min)
 
             # Map from desired acceleration to PWM
@@ -169,6 +171,18 @@ class ArduinoInterfaceNode(MPClabNode):
 
     def saturate_pwm(self, pwm: float, pwm_max: float, pwm_min: float) -> float:
         return np.around(max(min(pwm, pwm_max), pwm_min))
+
+    def angle_to_pwm(self, steering_angle):
+        Popt = [1.59587557e-01, 1.58019463e+03, -2.04235057e-03, 4.34184765e-01,
+                3.74410204e-02, 2.18558980e-01]
+        offset = Popt[1]
+        gain = Popt[2]
+        outer_gain = Popt[3]
+        lr = Popt[4]
+        lf = Popt[5]
+        L = lr + lf
+        u = np.tan(steering_angle / outer_gain) / gain + offset
+        return u
 
 def main(args=None):
     rclpy.init(args=args)
