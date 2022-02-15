@@ -11,7 +11,7 @@ from barc_hardware_interface.barc_interface import BarcArduinoInterface
 #from mpclab_common.msg import VehicleState     as StateMsg
 #from mpclab_common.msg import BodyLinearAcceleration as AccelMsg
 #from mpclab_common.msg import BodyAngularVelocity    as GyroMsg
-#from mpclab_common.msg import VehicleActuation as ActuationMsg
+from mpclab_common.msg import VehicleActuationMsg
 from mpclab_common.mpclab_base_nodes import MPClabNode
 
 MSG_TIMEOUT_CTRL = 0.1
@@ -34,12 +34,11 @@ class BarcInterface(MPClabNode):
 
         self.update_timer = self.create_timer(0.01, self.step)
 
-        # self.control_sub = self.create_subscription(ActuationMsg,
-        #                                             'ecu',
-        #                                             self.control_callback,
-        #                                             qos_profile_sensor_data)
-        #
-        #
+        self.control_sub = self.create_subscription(VehicleActuationMsg,
+                                                    'ecu',
+                                                    self.control_callback,
+                                                    qos_profile_sensor_data)
+
         # self.state_pub = self.create_publisher(StateMsg,
         #                                        'state',
         #                                        qos_profile_sensor_data)
