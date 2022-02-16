@@ -15,7 +15,7 @@ class BarcArduinoInterfaceConfig():
 
     steering_max: int = field(default = 1900)
     steering_min: int = field(default = 1100)
-    steering_off: int = field(default = 1500)
+    steering_off: int = field(default = 1580)
 
     throttle_max: int = field(default = 1900)
     throttle_min: int = field(default = 1100)
