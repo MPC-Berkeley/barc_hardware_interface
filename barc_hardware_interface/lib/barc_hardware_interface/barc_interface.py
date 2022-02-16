@@ -80,8 +80,9 @@ class BarcArduinoInterface():
         throttle = self.config.throttle_off + throttle_gain * u.u_a * (self.config.throttle_max - self.config.throttle_min)
         throttle = max(min(throttle, self.config.throttle_max), self.config.throttle_min)
 
-        steering = self.config.steering_off + steering_gain * u.u_steer
-        steering = max(min(steering, self.config.steering_max), self.config.throttle_min)
+        # steering = self.config.steering_off + steering_gain * u.u_steer
+        steering = self.angle_to_pwm(u.u_steer)
+        steering = max(min(steering, self.config.steering_max), self.config.steering_min)
            
         self.serial.flushOutput()
         self.serial.write(b'A0%03d\n'%(throttle - 1000))
@@ -131,6 +132,18 @@ class BarcArduinoInterface():
         v_rl = float(msg[rl_start+1:rr_start])
         v_rr = float(msg[rr_start+1:])
         return v_fl, v_fr, v_rl, v_rr
+
+    def angle_to_pwm(self, steering_angle):
+        Popt = [1.59587557e-01, 1.58019463e+03, -2.04235057e-03, 4.34184765e-01,
+                3.74410204e-02, 2.18558980e-01]
+        offset = Popt[1]
+        gain = Popt[2]
+        outer_gain = Popt[3]
+        lr = Popt[4]
+        lf = Popt[5]
+        L = lr + lf
+        u = np.tan(steering_angle / outer_gain) / gain + offset
+        return u
 
 
 class BarcPiInterface():
