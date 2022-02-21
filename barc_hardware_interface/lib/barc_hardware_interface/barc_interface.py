@@ -148,7 +148,23 @@ class BarcArduinoInterface():
         v_rl = float(msg[rl_start+1:rr_start])
         v_rr = float(msg[rr_start+1:])
         return v_fl, v_fr, v_rl, v_rr
-
+    
+    def read_accel(self):
+        self.serial.flushOutput()
+        self.serial.flushInput()
+        self.serial.write(b'B2000\n')
+        
+        msg = self.serial.read_until(expected='\r\n'.encode('ascii'), size=50).decode('ascii')
+        ax_start = msg.find('x')
+        ay_start = msg.find('y')
+        az_start = msg.find('z')
+        if ax_start < 0 or ay_start < 0 or az_start < 0:
+            return None
+        ax = float(msg[ax_start+1:ay_start])*9.81
+        ay = float(msg[ay_start+1:az_start])*9.81
+        az = float(msg[az_start+1:])*9.81
+        return ax, ay, az
+        
     def angle_to_pwm(self, steering_angle):
         Popt = [1.59587557e-01, 1.58019463e+03, -2.04235057e-03, 4.34184765e-01,
                 3.74410204e-02, 2.18558980e-01]

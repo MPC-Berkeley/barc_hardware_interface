@@ -1,5 +1,6 @@
 #include <Servo.h>
 #include <QuadratureEncoder.h>
+#include <Arduino_LSM9DS1.h>
 
 #define DEBUG        0
 
@@ -46,6 +47,12 @@ unsigned int steering_us = STEERING_OFF;
 #define ENC_RR_A D11 // ! swapped order
 #define ENC_RR_B D12
 
+float alpha = 0.2;
+float ax, ay, az;
+float ax_smooth = 0.0;
+float ay_smooth = 0.0;
+float az_smooth = 0.0;
+
 double v_fr, v_fl, v_rr, v_rl;
 Encoders fr(ENC_FR_A, ENC_FR_B);
 Encoders fl(ENC_FL_A, ENC_FL_B);
@@ -54,9 +61,9 @@ Encoders rr(ENC_RR_A, ENC_RR_B);
  
 void setup() {
   Serial.begin(BAUD_RATE);
+  IMU.begin();
   setup_actuators();
   reset_actuators();
-  
 }
 
 void loop() {
@@ -182,6 +189,21 @@ void check_serial(){
           }
           break;
 
+        case '2': // read accelerometer
+          if (IMU.accelerationAvailable()) {
+            IMU.readAcceleration(ax, ay, az);
+            ax_smooth = (1-alpha)*ax_smooth + alpha*ax;
+            ay_smooth = (1-alpha)*ay_smooth + alpha*ay;
+            az_smooth = (1-alpha)*az_smooth + alpha*az;
+          }
+          Serial.print("B2x");
+          Serial.print(ax_smooth, NUM_FLOATING_POINT_DECIMALS);
+          Serial.print("y");
+          Serial.print(ay_smooth, NUM_FLOATING_POINT_DECIMALS);
+          Serial.print("z");
+          Serial.print(az_smooth, NUM_FLOATING_POINT_DECIMALS);
+          break;
+          
         case '3': // read encoder
           v_fr = fr.getSpeedAvg();
           v_fl = fl.getSpeedAvg();
