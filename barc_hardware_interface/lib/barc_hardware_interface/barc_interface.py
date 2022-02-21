@@ -41,12 +41,14 @@ steering_gain = -1050 # -1000
 
 class BarcArduinoInterface():
 
-    def __init__(self, config: BarcArduinoInterfaceConfig = BarcArduinoInterfaceConfig()):
+    def __init__(self, config: BarcArduinoInterfaceConfig = BarcArduinoInterfaceConfig(), logger=None):
         self.config = config
         self.start()
         self.dt=0.01
         self.v = 0
         self.desired_a = 0
+        self.logger = logger
+        self.K = 0
         return
 
     def start(self):
@@ -80,24 +82,27 @@ class BarcArduinoInterface():
         
         if self.config.torque_control:
             if not self.v==0 or not x.u.u_a==0:
-                if x.u.u_a == self.desired_a:
+                # self.logger(str(x.v.v_long) + ',' + str(self.v))
+                if x.u.u_a == self.desired_a or True:
                     c = self.config.dt
                     if x.u.u_a < 0:
-                        c = self.config.dt*10
-                    self.v += c*x.u.u_a
+                        c = self.config.dt
+                    self.v += c*x.u.u_a + self.K*(self.v - x.v.v_long)
                 else:
+                    if self.logger is not None:
+                        self.logger(str(x.v.v_long) + "," + str(self.v))
                     c = self.config.dt
                     if x.u.u_a < 0:
-                        c = self.config.dt*10
+                        c = self.config.dt
                     self.desired_a = x.u.u_a
-                    self.v = x.v.v_long + c*x.u.u_a
+                    self.v = x.v.v_long + c*x.u.u_a + self.K*(self.v - x.v.v_long)
             throttle = self.v_to_pwm(self.v)
         else:
             throttle = self.config.throttle_off + throttle_gain * x.u.u_a * (self.config.throttle_max - self.config.throttle_min)
         throttle = max(min(throttle, self.config.throttle_max), self.config.throttle_min)
 
-        # steering = self.config.steering_off + steering_gain * x.u.u_steer
-        steering = self.angle_to_pwm(x.u.u_steer)
+        steering = self.config.steering_off + steering_gain * x.u.u_steer
+        # steering = self.angle_to_pwm(x.u.u_steer)
         steering = max(min(steering, self.config.steering_max), self.config.steering_min)
            
         self.serial.flushOutput()
