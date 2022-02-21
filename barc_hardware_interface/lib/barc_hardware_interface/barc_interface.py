@@ -21,7 +21,7 @@ class BarcArduinoInterfaceConfig():
     throttle_min: int = field(default = 1100)
     throttle_off: int = field(default = 1500)
 
-
+    torque_control: bool = field(default = False)
 
 @dataclass
 class BarcPiInterfaceConfig():
@@ -37,14 +37,16 @@ class BarcPiInterfaceConfig():
     throttle_off: int = field(default = 1500)
 
 throttle_gain = 15/90
-steering_gain = -1000 #200/17.0 * 180 / np.pi
+steering_gain = -1050 # -1000
 
 class BarcArduinoInterface():
 
     def __init__(self, config: BarcArduinoInterfaceConfig = BarcArduinoInterfaceConfig()):
         self.config = config
-        #self.hw_state = DriveState()
         self.start()
+        self.dt=0.01
+        self.v = 0
+        self.desired_a = 0
         return
 
     def start(self):
@@ -71,17 +73,31 @@ class BarcArduinoInterface():
         return None
 
     def step(self, state:VehicleState):
-        self.write_output(state.u)
-        #state.hw = self.hw_state.copy()
+        self.write_output(state)
         return
 
-    def write_output(self, u: VehicleActuation):
-
-        throttle = self.config.throttle_off + throttle_gain * u.u_a * (self.config.throttle_max - self.config.throttle_min)
+    def write_output(self, x: VehicleState):
+        
+        if self.config.torque_control:
+            if not self.v==0 or not x.u.u_a==0:
+                if x.u.u_a == self.desired_a:
+                    c = self.config.dt
+                    if x.u.u_a < 0:
+                        c = self.config.dt*10
+                    self.v += c*x.u.u_a
+                else:
+                    c = self.config.dt
+                    if x.u.u_a < 0:
+                        c = self.config.dt*10
+                    self.desired_a = x.u.u_a
+                    self.v = x.v.v_long + c*x.u.u_a
+            throttle = self.v_to_pwm(self.v)
+        else:
+            throttle = self.config.throttle_off + throttle_gain * x.u.u_a * (self.config.throttle_max - self.config.throttle_min)
         throttle = max(min(throttle, self.config.throttle_max), self.config.throttle_min)
 
-        # steering = self.config.steering_off + steering_gain * u.u_steer
-        steering = self.angle_to_pwm(u.u_steer)
+        # steering = self.config.steering_off + steering_gain * x.u.u_steer
+        steering = self.angle_to_pwm(x.u.u_steer)
         steering = max(min(steering, self.config.steering_max), self.config.steering_min)
            
         self.serial.flushOutput()
@@ -144,7 +160,10 @@ class BarcArduinoInterface():
         L = lr + lf
         u = np.tan(steering_angle / outer_gain) / gain + offset
         return u
-
+    
+    def v_to_pwm(self, v):
+        pwm = self.config.throttle_off + 55.37439384702125*v
+        return pwm
 
 class BarcPiInterface():
     def __init__(self, config: BarcPiInterfaceConfig= BarcPiInterfaceConfig()):
