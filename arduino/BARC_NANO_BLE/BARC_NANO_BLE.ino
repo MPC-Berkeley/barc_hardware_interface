@@ -22,8 +22,8 @@ Servo steering_servo;
 #define THROTTLE_FORWARD LOW
 #define THROTTLE_BACKWARD HIGH
 
-#define STEERING_MAX 1900
-#define STEERING_MIN 1100
+#define STEERING_MAX 1999
+#define STEERING_MIN 1001
 #define STEERING_OFF 1500
 
 // Serial Port Settings
