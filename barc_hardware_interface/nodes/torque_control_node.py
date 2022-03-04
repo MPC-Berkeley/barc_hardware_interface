@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 
-import numpy as np
-
 import rclpy
 from rclpy.qos import qos_profile_sensor_data
 
@@ -13,16 +11,12 @@ from mpclab_common.mpclab_base_nodes import MPClabNode
 
 MSG_TIMEOUT_CTRL = 0.1
 
+
 class BarcInterface(MPClabNode):
 
     def __init__(self):
         super().__init__('barc3d_interface')
-        namespace = self.get_namespace()
-
-        # TODO
-        #param_template = JoystickNodeParams()
-        #self.autodeclare_parameters(param_template, namespace)
-        #self.autoload_parameters(param_template, namespace)
+        self.namespace = self.get_namespace()
         
         config = BarcArduinoInterfaceConfig(torque_control=True)
         self.barc  = BarcArduinoInterface(config)
@@ -61,9 +55,21 @@ class BarcInterface(MPClabNode):
 
     def step(self):
         t = self.clock.now().nanoseconds/1E9
-        self.state.u = self.input
-        #self.get_logger().info(str(self.state))
-        self.barc.step(self.state)
+
+        # Check if control node in same namespace still exists
+        nodes = self.get_node_names_and_namespaces()
+        control_alive = False
+        for n in nodes:
+            if n[1] == self.namespace and 'control' in n[0]:
+                control_alive = True
+                break
+
+        if control_alive:
+            self.state.u = self.input
+            #self.get_logger().info(str(self.state))
+            self.barc.step(self.state)
+        else:
+            self.disable_output()
 
         return
 
@@ -71,7 +77,7 @@ class BarcInterface(MPClabNode):
         if self.output_enabled:
             self.barc.disable_output()
             self.output_enabled = False
-            self.get_logger().info('Disabling HW output due to timeout')
+            self.get_logger().info('Disabling HW output')
 
     def enable_output(self):
         if not self.output_enabled:
