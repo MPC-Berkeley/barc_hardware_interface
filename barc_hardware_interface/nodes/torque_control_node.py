@@ -39,9 +39,9 @@ class BarcInterface(MPClabNode):
 
         self.last_msg_timestamp = self.clock.now().nanoseconds/1E9 - MSG_TIMEOUT_CTRL
         self.output_enabled = False
-        # self.disable_output()
         self.enable_output()
-
+        
+        self.control_alive = True
         return
 
     def control_callback(self, msg):
@@ -56,20 +56,9 @@ class BarcInterface(MPClabNode):
     def step(self):
         t = self.clock.now().nanoseconds/1E9
 
-        # Check if control node in same namespace still exists
-        nodes = self.get_node_names_and_namespaces()
-        control_alive = False
-        for n in nodes:
-            if n[1] == self.namespace and 'control' in n[0]:
-                control_alive = True
-                break
-
-        if control_alive:
+        if self.control_alive:
             self.state.u = self.input
-            #self.get_logger().info(str(self.state))
             self.barc.step(self.state)
-        else:
-            self.disable_output()
 
         return
 
@@ -90,7 +79,7 @@ def main(args=None):
     rclpy.init(args=args)
     node = BarcInterface()
     rclpy.spin(node)
-
+ 
     node.destroy_node()
     rclpy.shutdown()
 

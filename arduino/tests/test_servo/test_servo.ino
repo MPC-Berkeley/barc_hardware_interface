@@ -1,5 +1,5 @@
 #include <Servo.h>
-#define SteeringPin D5
+#define SteeringPin D12
 
 #define STEERING_MAX 1900
 #define STEERING_MIN 1100
@@ -14,7 +14,8 @@ void setup() {
 }
 
 void loop() {
-  steering.writeMicroseconds(STEERING_OFF);
+   steering.writeMicroseconds(1500);
+//  steering.writeMicroseconds(STEERING_OFF);/
   // put your main code here, to run repeatedly:
 //  for (pos = 0; pos <= 180; pos += 1) { // goes from 0 degrees to 180 degrees
 //    // in steps of 1 degree

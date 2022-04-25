@@ -15,7 +15,7 @@ class BarcArduinoInterfaceConfig():
 
     steering_max: int = field(default = 1999)
     steering_min: int = field(default = 1000)
-    steering_off: int = field(default = 1580)
+    steering_off: int = field(default = 1490)
 
     throttle_max: int = field(default = 1900)
     throttle_min: int = field(default = 1100)
@@ -37,7 +37,7 @@ class BarcPiInterfaceConfig():
     throttle_off: int = field(default = 1500)
 
 throttle_gain = 15/90
-steering_gain = -700 #-800 # -1000
+steering_gain = -1000 # -700 #-800 # -1000
 
 class BarcArduinoInterface():
 
@@ -171,8 +171,8 @@ class BarcArduinoInterface():
         return ax, ay, az
         
     def angle_to_pwm(self, steering_angle):
-        Popt = [1.59587557e-01, 1.58019463e+03, -2.04235057e-03*4.5, 4.34184765e-01/1.3,
-                3.74410204e-02, 2.18558980e-01]
+        Popt = [1.01471732e-01, 1.490e+03, -1.57788871e-03, 5.38431760e-01,
+                1.18338718e-01, 1.37661282e-01]
         offset = Popt[1]
         gain = Popt[2]
         outer_gain = Popt[3]
