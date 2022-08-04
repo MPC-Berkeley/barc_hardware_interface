@@ -21,6 +21,9 @@ class BarcArduinoInterfaceConfig():
     throttle_min: int = field(default = 1100)
     throttle_off: int = field(default = 1500)
 
+    steering_map_params: list = field(default_factory=lambda : [1.01471732e-01, 1.490e+03, -1.57788871e-03, 5.38431760e-01, 1.18338718e-01, 1.37661282e-01])
+    throttle_map_params: list = field(default_factory=lambda : [55.37439384702125])
+    
     control_mode: str = field(default = 'torque')
 
 throttle_gain = 15/90
@@ -31,12 +34,13 @@ class BarcArduinoInterface():
     def __init__(self, config: BarcArduinoInterfaceConfig = BarcArduinoInterfaceConfig(), 
                         print_method=print):
         self.config = config
-        self.start()
-        self.dt=0.01
+        self.dt = config.dt
         self.v = 0
-        self.desired_a = 0
+
         self.print_method = print_method
-        self.K = 0
+
+        self.start()
+
         return
 
     def start(self):
@@ -150,8 +154,9 @@ class BarcArduinoInterface():
         return ax, ay, az
         
     def angle_to_pwm(self, steering_angle):
-        Popt = [1.01471732e-01, 1.490e+03, -1.57788871e-03, 5.38431760e-01,
-                1.18338718e-01, 1.37661282e-01]
+        # Popt = [1.01471732e-01, 1.490e+03, -1.57788871e-03, 5.38431760e-01,
+        #         1.18338718e-01, 1.37661282e-01]
+        Popt = self.config.steering_map_params
         offset = Popt[1]
         gain = Popt[2]
         outer_gain = Popt[3]
@@ -162,7 +167,9 @@ class BarcArduinoInterface():
         return u
     
     def v_to_pwm(self, v):
-        pwm = self.config.throttle_off + 55.37439384702125*v
+        # K = 55.37439384702125
+        K = self.config.throttle_map_params[0]
+        pwm = self.config.throttle_off + K * v
         return pwm
 
 if __name__ == '__main__':
