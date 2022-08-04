@@ -76,7 +76,7 @@ class BarcArduinoInterface():
             throttle = self.v_to_pwm(self.v)
             steering = self.angle_to_pwm(x.u.u_steer)
         elif self.config.control_mode == 'velocity':
-            throttle = self.config.throttle_off + throttle_gain * x.u.u_a * (self.config.throttle_max - self.config.throttle_min)
+            throttle = self.v_to_pwm(x.u.u_a)
             steering = self.angle_to_pwm(x.u.u_steer)
         elif self.config.control_mode == 'direct':
             throttle = int(x.u.u_a)
