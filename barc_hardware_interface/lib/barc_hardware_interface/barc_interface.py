@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from mpclab_common.pytypes import VehicleActuation, VehicleState, PythonMsg
 
 @dataclass
-class BarcArduinoInterfaceConfig():
+class BarcArduinoInterfaceConfig(PythonMsg):
     device_name: str = field(default = 'Nano')
     port: str   = field(default = None) # default to autoscan
     baud: int   = field(default = 115200)
@@ -21,8 +21,10 @@ class BarcArduinoInterfaceConfig():
     throttle_min: int = field(default = 1100)
     throttle_off: int = field(default = 1500)
 
-    steering_map_params: list = field(default_factory=lambda : [1.01471732e-01, 1.490e+03, -1.57788871e-03, 5.38431760e-01, 1.18338718e-01, 1.37661282e-01])
-    throttle_map_params: list = field(default_factory=lambda : [55.37439384702125])
+    # steering_map_params: list = field(default_factory=lambda : [1.01471732e-01, 1.490e+03, -1.57788871e-03, 5.38431760e-01, 1.18338718e-01, 1.37661282e-01])
+    # throttle_map_params: list = field(default_factory=lambda : [55.37439384702125])
+    steering_map_params: list = field(default=None)
+    throttle_map_params: list = field(default=None)
     
     control_mode: str = field(default = 'torque')
 

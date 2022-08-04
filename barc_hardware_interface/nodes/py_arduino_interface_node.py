@@ -68,6 +68,9 @@ class ArduinoInterfaceNode(MPClabNode):
             self.control_msg_start = True
         return
 
+    def state_callback(self, msg):
+        self.unpack_msg(msg, self.state)
+        
     def step(self):
         t = self.clock.now().nanoseconds/1E9
         
