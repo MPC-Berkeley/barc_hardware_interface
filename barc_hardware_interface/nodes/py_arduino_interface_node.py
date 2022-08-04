@@ -31,6 +31,7 @@ class ArduinoInterfaceNode(MPClabNode):
         self.autoload_parameters(param_template, namespace, verbose=False)
 
         self.interface_params.dt = self.dt
+        self.get_logger().info(str(self.interface_params))
         self.interface  = BarcArduinoInterface(self.interface_params,
                                                 print_method=self.get_logger().info)
         
@@ -51,7 +52,10 @@ class ArduinoInterfaceNode(MPClabNode):
                                                   qos_profile_sensor_data)
 
         self.state = VehicleState()
-        self.input = VehicleActuation(u_a=0, u_steer=0)
+        if self.interface_params.control_mode == 'direct':
+            self.input = VehicleActuation(u_a=self.interface_params.throttle_off, u_steer=self.interface_params.steering_off)
+        else:
+            self.input = VehicleActuation(u_a=0, u_steer=0)
 
         self.control_msg_start = False
         self.last_msg_timestamp = self.clock.now().nanoseconds/1E9 - MSG_TIMEOUT_CTRL
