@@ -111,12 +111,11 @@ class BarcInterface(MPClabNode):
 
         #################### writing commands #######################
        
-        throttle = 1520 if t < 2 else 1500
-        steering_angle = 0 if t < 2 else 0.0 #in rad
+        throttle = 1550 if t < 2 else 1550
+        steering = 1500 if t < 2 else 1500
        
-        steering = self.angle_to_pwm(steering_angle)
         self.throttle_vec.append(throttle)
-        self.steering_vec.append(steering_angle)
+        self.steering_vec.append(steering)
         self.barc.write_raw_commands(throttle=throttle, steering=steering)
         
         
@@ -168,6 +167,19 @@ class BarcInterface(MPClabNode):
             self.get_logger().info('Enabling HW output')
 
     def angle_to_pwm(self, steering_angle):
+
+        #u = tan(steering_angle / outer_gain) * gain + offset
+        # beta = ca.arctan(lr/L*ca.tan(steering_angle))
+        # Popt = [1.01469519e-01,  1.52277729e+03, -2.44954380e-03, 3.65220714e-01,
+        # 5.42083502e-02,  2.01791650e-01]
+	
+	    # without v transformation 
+        #Popt = [ 1.59587557e-01,  1.58019463e+03, -2.04235057e-03,  4.34184765e-01,
+        #3.74410204e-02,  2.18558980e-01]
+
+        # with v Transformation
+	    #Popt = [1.59587557e-01,  1.57976089e+03, -2.03580401e-03,  4.35267745e-01,
+        #1.23028808e-01,  1.32971192e-01]
 	    
         Popt = [ 1.20106157e-01,  1.60183547e+03, -4.21558157e-03, 2.51962419e-01, 3.58509959e-02,  2.20149004e-01]
         
@@ -179,7 +191,7 @@ class BarcInterface(MPClabNode):
 
         L = lr + lf
 
-        # original eq.
+        # original
         # steering_angle = outer_gain*(ca.arctan( (u(t-delay) - offset) * gain) )   
         # beta = ca.arctan(lr/L*ca.tan(steering_angle))
 
