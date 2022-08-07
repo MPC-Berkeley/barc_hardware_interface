@@ -1,8 +1,8 @@
-#define DIR D5
-#define PWM D4
-#define SLP D3
-#define FLT D2
-#define CS A7
+#define DIR D6
+#define PWM D7
+#define SLP D8
+#define FLT D9
+#define CS A0
 
 void setup() {
   pinMode(PWM, OUTPUT);
@@ -22,7 +22,7 @@ void loop() {
 
 
   //Drive backward
-  analogWrite(PWM, 50);
-  digitalWrite(DIR, LOW);
-  delay(2000);
+//  analogWrite(PWM, 50);
+//  digitalWrite(DIR, LOW);
+//  delay(2000);
 }

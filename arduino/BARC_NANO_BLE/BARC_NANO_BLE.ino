@@ -4,12 +4,12 @@
 
 #define DEBUG        0
 
-#define THROTTLE_PIN D4
-#define DIRECTION_PIN D5
-#define MOTOR_SLEEP D3
-#define MOTOR_FAULT D2
-#define MOTOR_CURRENT A7
-#define STEERING_PIN D12
+#define THROTTLE_PIN D7
+#define DIRECTION_PIN D6
+#define MOTOR_SLEEP D8
+#define MOTOR_FAULT D9
+#define MOTOR_CURRENT A0
+#define STEERING_PIN D5
 
 Servo steering_servo;
 
@@ -45,7 +45,7 @@ unsigned int steering_us = STEERING_OFF;
 #define ENC_RL_A D4
 #define ENC_RL_B D3
 #define ENC_RR_A D11 // ! swapped order
-#define ENC_RR_B D10 //D12
+#define ENC_RR_B D12
 
 float alpha = 0.2;
 float ax, ay, az;
