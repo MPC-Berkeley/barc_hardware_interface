@@ -1,3 +1,4 @@
+from multiprocessing.sharedctypes import Value
 from serial import Serial
 from serial.tools import list_ports
 import numpy as np
@@ -13,23 +14,20 @@ class BarcArduinoInterfaceConfig(PythonMsg):
     dt:   float = field(default = 0.01)
     require_echo: bool = field(default = False)
 
-    steering_max: int = field(default = 1999)
-    steering_min: int = field(default = 1000)
-    steering_off: int = field(default = 1490)
+    steering_max: int = field(default = 1990)
+    steering_min: int = field(default = 1010)
+    steering_off: int = field(default = 1500)
 
     throttle_max: int = field(default = 1900)
     throttle_min: int = field(default = 1100)
     throttle_off: int = field(default = 1500)
 
-    # steering_map_params: list = field(default_factory=lambda : [1.01471732e-01, 1.490e+03, -1.57788871e-03, 5.38431760e-01, 1.18338718e-01, 1.37661282e-01])
-    # throttle_map_params: list = field(default_factory=lambda : [55.37439384702125])
-    steering_map_params: list = field(default=None)
-    throttle_map_params: list = field(default=None)
+    steering_map_mode: str      = field(default='affine')
+    steering_map_params: list   = field(default=None)
+    throttle_map_mode: str      = field(default='affine')
+    throttle_map_params: list   = field(default=None)
     
     control_mode: str = field(default = 'torque')
-
-throttle_gain = 15/90
-steering_gain = -1000 # -700 #-800 # -1000
 
 class BarcArduinoInterface():
 
@@ -74,21 +72,29 @@ class BarcArduinoInterface():
 
     def write_output(self, x: VehicleState):
         if self.config.control_mode == 'torque':
-            self.v += self.dt*x.u.u_a
-            throttle = self.v_to_pwm(self.v)
+            if self.config.throttle_map_mode == 'integration':
+                self.v += self.dt*x.u.u_a
+                throttle = self.v_to_pwm(self.v)
+            elif self.config.throttle_map_mode == 'affine':
+                throttle = self.a_to_pwm(x.u.u_a)
+            else:
+                raise(ValueError("Throttle map mode must be 'affine', 'integration'"))
             steering = self.angle_to_pwm(x.u.u_steer)
         elif self.config.control_mode == 'velocity':
             throttle = self.v_to_pwm(x.u.u_a)
             steering = self.angle_to_pwm(x.u.u_steer)
         elif self.config.control_mode == 'direct':
-            throttle = int(x.u.u_a)
-            steering = int(x.u.u_steer)
+            throttle = x.u.u_a
+            steering = x.u.u_steer
         else:
             raise(ValueError("Control mode must be 'torque', 'velocity', or 'direct'"))
         
-        throttle = max(min(throttle, self.config.throttle_max), self.config.throttle_min)
-        steering = max(min(steering, self.config.steering_max), self.config.steering_min)
-        # steering = self.config.steering_off + steering_gain * x.u.u_steer
+        if throttle > 1.1*self.config.throttle_max or throttle < 0.9*self.config.throttle_min:
+            throttle = self.config.throttle_off
+        if steering > 1.1*self.config.steering_max or steering < 0.9*self.config.steering_min:
+            steering = self.config.steering_off
+        throttle = int(max(min(throttle, self.config.throttle_max), self.config.throttle_min))
+        steering = int(max(min(steering, self.config.steering_max), self.config.steering_min))
         
         self.serial.flushOutput()
         self.serial.write(b'A0%03d\n'%(throttle - 1000))
@@ -156,23 +162,34 @@ class BarcArduinoInterface():
         return ax, ay, az
         
     def angle_to_pwm(self, steering_angle):
-        # Popt = [1.01471732e-01, 1.490e+03, -1.57788871e-03, 5.38431760e-01,
-        #         1.18338718e-01, 1.37661282e-01]
-        Popt = self.config.steering_map_params
-        offset = Popt[1]
-        gain = Popt[2]
-        outer_gain = Popt[3]
-        lr = Popt[4]
-        lf = Popt[5]
-        L = lr + lf
-        u = np.tan(steering_angle / outer_gain) / gain + offset
-        return u
+        if self.config.steering_map_mode == 'affine':
+            offset, gain = self.config.steering_map_params
+            steer_pwm = steering_angle / gain + offset
+        elif self.config.steering_map_mode == 'arctan':
+            # Popt = [1.01471732e-01, 1.490e+03, -1.57788871e-03, 5.38431760e-01,
+            #         1.18338718e-01, 1.37661282e-01]
+            # Popt = self.config.steering_map_params
+            offset = self.config.steering_map_params[1]
+            gain = self.config.steering_map_params[2]
+            outer_gain = self.config.steering_map_params[3]
+            # lr = Popt[4]
+            # lf = Popt[5]
+            # L = lr + lf
+            steer_pwm = np.tan(steering_angle / outer_gain) / gain + offset
+        else:
+            raise(ValueError("Steering map mode must be 'affine' or 'arctan'"))
+        return steer_pwm
     
     def v_to_pwm(self, v):
         # K = 55.37439384702125
         K = self.config.throttle_map_params[0]
-        pwm = self.config.throttle_off + K * v
-        return pwm
+        throttle_pwm = self.config.throttle_off + K * v
+        return throttle_pwm
+
+    def a_to_pwm(self, a):
+        gain = self.config.throttle_map_params[0]
+        throttle_pwm = a / gain + self.config.throttle_off
+        return throttle_pwm
 
 if __name__ == '__main__':
     arduino = BarcArduinoInterface()
