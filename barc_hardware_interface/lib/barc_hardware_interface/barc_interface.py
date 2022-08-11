@@ -4,7 +4,7 @@ from serial.tools import list_ports
 import numpy as np
 from dataclasses import dataclass, field
 
-from mpclab_common.pytypes import VehicleActuation, VehicleState, PythonMsg
+from mpclab_common.pytypes import VehicleState, PythonMsg
 
 @dataclass
 class BarcArduinoInterfaceConfig(PythonMsg):
@@ -100,7 +100,7 @@ class BarcArduinoInterface():
         self.serial.write(b'A0%03d\n'%(throttle - 1000))
         self.serial.write(b'A1%03d\n'%(steering - 1000))
 
-        return
+        return throttle, steering
     
     def write_raw_commands(self, throttle: int, steering: int):
         throttle = max(min(throttle, self.config.throttle_max), self.config.throttle_min)
