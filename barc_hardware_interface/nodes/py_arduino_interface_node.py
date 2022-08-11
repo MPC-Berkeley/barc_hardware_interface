@@ -8,7 +8,7 @@ import numpy as np
 
 from barc_hardware_interface.barc_interface import BarcArduinoInterface, BarcArduinoInterfaceConfig
 
-from mpclab_common.msg import VehicleStateMsg, VehicleActuationMsg, EncoderMsg
+from mpclab_common.msg import VehicleStateMsg, VehicleActuationMsg
 from mpclab_common.pytypes import NodeParamTemplate, VehicleActuation, VehicleState
 from mpclab_common.mpclab_base_nodes import MPClabNode
 
@@ -16,9 +16,10 @@ MSG_TIMEOUT_CTRL = 0.2
 
 class InterfaceNodeParams(NodeParamTemplate):
     def __init__(self):
-        self.dt = 0.01
-        self.interface_params = BarcArduinoInterfaceConfig()
-
+        self.dt                 = 0.01
+        self.imu                = False
+        self.interface_params   = BarcArduinoInterfaceConfig()
+        
 class ArduinoInterfaceNode(MPClabNode):
 
     def __init__(self):
@@ -50,6 +51,11 @@ class ArduinoInterfaceNode(MPClabNode):
                                                   'est_state',
                                                   self.state_callback,
                                                   qos_profile_sensor_data)
+
+        self.barc_state_pub = self.create_publisher(
+            VehicleStateMsg,
+            'barc_state',
+            qos_profile_sensor_data)
 
         self.state = VehicleState()
         if self.interface_params.control_mode == 'direct':
@@ -83,9 +89,23 @@ class ArduinoInterfaceNode(MPClabNode):
 
         if self.control_alive:
             self.state.u = self.input
-            self.interface.step(self.state)
+            th, st = self.interface.step(self.state)
+            self.state.hw.throttle = th
+            self.state.hw.steering = st
         else:
+            self.state.hw.throttle = self.interface_params.throttle_off
+            self.state.hw.steering = self.interface_params.steering_off
             self.disable_output()
+
+        if self.imu:
+            ax, ay, az = self.interface.read_accel()
+            self.state.a.a_long = ax
+            self.state.a.a_tran = ay
+            self.state.a.a_n = az
+
+        self.state.t = t
+        barc_state_msg = self.populate_msg(VehicleStateMsg(), self.state)
+        self.barc_state_pub.publish(barc_state_msg)
 
         return
 
