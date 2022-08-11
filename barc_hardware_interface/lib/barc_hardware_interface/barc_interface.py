@@ -89,9 +89,9 @@ class BarcArduinoInterface():
         else:
             raise(ValueError("Control mode must be 'torque', 'velocity', or 'direct'"))
         
-        if throttle > 1.1*self.config.throttle_max or throttle < 0.9*self.config.throttle_min:
+        if throttle > 1.2*self.config.throttle_max or throttle < 0.8*self.config.throttle_min:
             throttle = self.config.throttle_off
-        if steering > 1.1*self.config.steering_max or steering < 0.9*self.config.steering_min:
+        if steering > 1.2*self.config.steering_max or steering < 0.8*self.config.steering_min:
             steering = self.config.steering_off
         throttle = int(max(min(throttle, self.config.throttle_max), self.config.throttle_min))
         steering = int(max(min(steering, self.config.steering_max), self.config.steering_min))
