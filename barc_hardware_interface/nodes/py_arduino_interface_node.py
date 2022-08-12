@@ -4,6 +4,7 @@ import rclpy
 from rclpy.qos import qos_profile_sensor_data
 
 from serial import Serial
+
 import numpy as np
 
 from barc_hardware_interface.barc_interface import BarcArduinoInterface, BarcArduinoInterfaceConfig
@@ -69,6 +70,7 @@ class ArduinoInterfaceNode(MPClabNode):
         self.enable_output()
 
         self.control_alive = True
+
         return
 
     def control_callback(self, msg):
@@ -99,9 +101,9 @@ class ArduinoInterfaceNode(MPClabNode):
 
         if self.imu:
             ax, ay, az = self.interface.read_accel()
-            self.state.a.a_long = ax
-            self.state.a.a_tran = ay
-            self.state.a.a_n = az
+            self.state.a.a_long = -ay
+            self.state.a.a_tran = -ax
+            self.state.a.a_n = -az
 
         self.state.t = t
         barc_state_msg = self.populate_msg(VehicleStateMsg(), self.state)

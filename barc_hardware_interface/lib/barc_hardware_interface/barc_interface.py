@@ -67,8 +67,7 @@ class BarcArduinoInterface():
         return None
 
     def step(self, state:VehicleState):
-        self.write_output(state)
-        return
+        return self.write_output(state)
 
     def write_output(self, x: VehicleState):
         if self.config.control_mode == 'torque':
