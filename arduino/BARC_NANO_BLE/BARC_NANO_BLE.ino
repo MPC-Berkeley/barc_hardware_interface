@@ -4,12 +4,21 @@
 
 #define DEBUG        0
 
-#define THROTTLE_PIN D4
-#define DIRECTION_PIN D5
-#define MOTOR_SLEEP D3
-#define MOTOR_FAULT D2
-#define MOTOR_CURRENT A7
-#define STEERING_PIN D12
+// < BARC_Nano_Shield_v3
+#define THROTTLE_PIN D7
+#define DIRECTION_PIN D6
+#define MOTOR_SLEEP D8
+#define MOTOR_FAULT D9
+#define MOTOR_CURRENT A0
+#define STEERING_PIN D5
+
+// >= BARC_Nano_Shield_v3
+//#define THROTTLE_PIN D4
+//#define DIRECTION_PIN D5
+//#define MOTOR_SLEEP D3
+//#define MOTOR_FAULT D2
+//#define MOTOR_CURRENT A7
+//#define STEERING_PIN D12
 
 Servo steering_servo;
 
