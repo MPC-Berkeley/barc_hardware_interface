@@ -56,7 +56,7 @@ unsigned int steering_us = STEERING_OFF;
 #define ENC_RR_A D11 // ! swapped order
 #define ENC_RR_B D10 //D12
 
-float alpha = 0.2;
+float alpha = 0.5;
 float ax, ay, az;
 float ax_smooth = 0.0;
 float ay_smooth = 0.0;

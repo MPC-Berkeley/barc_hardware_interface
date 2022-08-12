@@ -2,15 +2,12 @@
 
 import rclpy
 from rclpy.qos import qos_profile_sensor_data
-
-from serial import Serial
-
-import numpy as np
+from geometry_msgs.msg import Vector3Stamped
 
 from barc_hardware_interface.barc_interface import BarcArduinoInterface, BarcArduinoInterfaceConfig
 
 from mpclab_common.msg import VehicleStateMsg, VehicleActuationMsg
-from mpclab_common.pytypes import NodeParamTemplate, VehicleActuation, VehicleState
+from mpclab_common.pytypes import NodeParamTemplate, VehicleActuation, VehicleState, BodyLinearAcceleration
 from mpclab_common.mpclab_base_nodes import MPClabNode
 
 MSG_TIMEOUT_CTRL = 0.2
@@ -58,6 +55,13 @@ class ArduinoInterfaceNode(MPClabNode):
             'barc_state',
             qos_profile_sensor_data)
 
+        if self.imu:
+            self.barc_accel_pub = self.create_publisher(
+                Vector3Stamped,
+                'barc_accel',
+                qos_profile_sensor_data
+            )
+
         self.state = VehicleState()
         if self.interface_params.control_mode == 'direct':
             self.input = VehicleActuation(u_a=self.interface_params.throttle_off, u_steer=self.interface_params.steering_off)
@@ -85,6 +89,7 @@ class ArduinoInterfaceNode(MPClabNode):
         
     def step(self):
         t = self.clock.now().nanoseconds/1E9
+        stamp = self.get_clock().now().to_msg()
         
         if t - self.last_msg_timestamp > MSG_TIMEOUT_CTRL and self.control_msg_start:
             self.control_alive = False
@@ -99,15 +104,19 @@ class ArduinoInterfaceNode(MPClabNode):
             self.state.hw.steering = self.interface_params.steering_off
             self.disable_output()
 
-        if self.imu:
-            ax, ay, az = self.interface.read_accel()
-            self.state.a.a_long = -ay
-            self.state.a.a_tran = -ax
-            self.state.a.a_n = -az
-
         self.state.t = t
         barc_state_msg = self.populate_msg(VehicleStateMsg(), self.state)
         self.barc_state_pub.publish(barc_state_msg)
+
+        if self.imu:
+            ax, ay, az = self.interface.read_accel()
+            
+            accel_msg = Vector3Stamped()
+            accel_msg.header.stamp = stamp
+            accel_msg.vector.x = -ay
+            accel_msg.vector.y = -ax
+            accel_msg.vector.z = -az
+            self.barc_accel_pub.publish(accel_msg)        
 
         return
 
