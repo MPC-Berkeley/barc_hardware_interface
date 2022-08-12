@@ -201,7 +201,7 @@ void check_serial(){
           Serial.print("y");
           Serial.print(ay_smooth, NUM_FLOATING_POINT_DECIMALS);
           Serial.print("z");
-          Serial.print(az_smooth, NUM_FLOATING_POINT_DECIMALS);
+          Serial.println(az_smooth, NUM_FLOATING_POINT_DECIMALS);
           break;
           
         case '3': // read encoder
