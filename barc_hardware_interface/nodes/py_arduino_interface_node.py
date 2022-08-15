@@ -109,24 +109,26 @@ class ArduinoInterfaceNode(MPClabNode):
         # self.barc_state_pub.publish(barc_state_msg)
 
         if self.imu:
-            # ax, ay, az = self.interface.read_accel()
-            # wx, wy, wz = self.interface.read_gyro()
+            # a = self.interface.read_accel()
+            # w = self.interface.read_gyro()
             a, w = self.interface.read_imu()
-            ax, ay, az = a
-            wx, wy, wz = w
-            
-            imu_msg = Imu()
-            imu_msg.header.stamp = stamp
 
-            imu_msg.linear_acceleration.x = ay
-            imu_msg.linear_acceleration.y = ax
-            imu_msg.linear_acceleration.z = az
+            if a is not None and w is not None:
+                ax, ay, az = a
+                wx, wy, wz = w
+                
+                imu_msg = Imu()
+                imu_msg.header.stamp = stamp
 
-            imu_msg.angular_velocity.x = wy
-            imu_msg.angular_velocity.y = wx
-            imu_msg.angular_velocity.z = wz
+                imu_msg.linear_acceleration.x = ay
+                imu_msg.linear_acceleration.y = ax
+                imu_msg.linear_acceleration.z = az
 
-            self.barc_imu_pub.publish(imu_msg)  
+                imu_msg.angular_velocity.x = wy
+                imu_msg.angular_velocity.y = wx
+                imu_msg.angular_velocity.z = wz
+
+                self.barc_imu_pub.publish(imu_msg)  
 
         return
 

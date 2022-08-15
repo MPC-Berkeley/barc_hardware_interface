@@ -249,15 +249,15 @@ void check_serial(){
           }
           Serial.print("B4ax");
           Serial.print(ax_smooth, NUM_FLOATING_POINT_DECIMALS);
-          Serial.print("ay");
+          Serial.print("y");
           Serial.print(ay_smooth, NUM_FLOATING_POINT_DECIMALS);
-          Serial.print("az");
+          Serial.print("z");
           Serial.print(az_smooth, NUM_FLOATING_POINT_DECIMALS);
           Serial.print("wx");
           Serial.print(wx_smooth, NUM_FLOATING_POINT_DECIMALS);
-          Serial.print("wy");
+          Serial.print("y");
           Serial.print(wy_smooth, NUM_FLOATING_POINT_DECIMALS);
-          Serial.print("wz");
+          Serial.print("z");
           Serial.println(wz_smooth, NUM_FLOATING_POINT_DECIMALS);
           break;
           

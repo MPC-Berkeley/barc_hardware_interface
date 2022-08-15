@@ -163,25 +163,34 @@ class BarcArduinoInterface():
         self.serial.flushInput()
         self.serial.write(b'B4000\n')
         
-        msg = self.serial.read_until(expected='\r\n'.encode('ascii'), size=50).decode('ascii')
-        ax_start = msg.find('ax')
-        ay_start = msg.find('ay')
-        az_start = msg.find('az')
-        wx_start = msg.find('wx')
-        wy_start = msg.find('wy')
-        wz_start = msg.find('wz')
+        msg = self.serial.read_until(expected='\r\n'.encode('ascii'), size=100).decode('ascii')
+        a_start = msg.find('a')
+        w_start = msg.find('w')
+        if a_start < 0 or w_start < 0:
+            return None, None
+        a_msg = msg[a_start+1:w_start]
+        w_msg = msg[w_start+1:]
+
+        ax_start = a_msg.find('x')
+        ay_start = a_msg.find('y')
+        az_start = a_msg.find('z')
+        wx_start = w_msg.find('x')
+        wy_start = w_msg.find('y')
+        wz_start = w_msg.find('z')
         if ax_start < 0 or ay_start < 0 or az_start < 0:
-            return None
+            return None, None
         if wx_start < 0 or wy_start < 0 or wz_start < 0:
-            return None
-        ax = float(msg[ax_start+1:ay_start])*9.81
-        ay = float(msg[ay_start+1:az_start])*9.81
-        az = float(msg[az_start+1:wx_start])*9.81
+            return None, None
+
+        ax = float(a_msg[ax_start+1:ay_start])*9.81
+        ay = float(a_msg[ay_start+1:az_start])*9.81
+        az = float(a_msg[az_start+1:wx_start])*9.81
         a = [ax, ay, az]
-        wx = float(msg[wx_start+1:wy_start])
-        wy = float(msg[wy_start+1:wz_start])
-        wz = float(msg[wz_start+1:])
+        wx = float(w_msg[wx_start+1:wy_start])
+        wy = float(w_msg[wy_start+1:wz_start])
+        wz = float(w_msg[wz_start+1:])
         w = [wx, wy, wz]
+        
         return a, w
     
     def read_encoders(self):
