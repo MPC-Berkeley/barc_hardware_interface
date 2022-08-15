@@ -50,10 +50,10 @@ class ArduinoInterfaceNode(MPClabNode):
                                                   self.state_callback,
                                                   qos_profile_sensor_data)
 
-        # self.barc_state_pub = self.create_publisher(
-        #     VehicleStateMsg,
-        #     'barc_state',
-        #     qos_profile_sensor_data)
+        self.barc_control_pub = self.create_publisher(
+            VehicleActuationMsg,
+            'barc_control',
+            qos_profile_sensor_data)
 
         if self.imu:
             self.barc_imu_pub = self.create_publisher(
@@ -104,9 +104,9 @@ class ArduinoInterfaceNode(MPClabNode):
             self.state.hw.steering = self.interface_params.steering_off
             self.disable_output()
 
-        # self.state.t = t
-        # barc_state_msg = self.populate_msg(VehicleStateMsg(), self.state)
-        # self.barc_state_pub.publish(barc_state_msg)
+        self.input.t = t
+        barc_control_msg = self.populate_msg(VehicleActuation(), self.input)
+        self.barc_control_pub.publish(barc_control_msg)
 
         if self.imu:
             # a = self.interface.read_accel()
