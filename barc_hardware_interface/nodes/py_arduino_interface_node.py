@@ -4,6 +4,8 @@ import rclpy
 from rclpy.qos import qos_profile_sensor_data
 from sensor_msgs.msg import Imu
 
+import copy
+
 from barc_hardware_interface.barc_interface import BarcArduinoInterface, BarcArduinoInterfaceConfig
 
 from mpclab_common.msg import VehicleStateMsg, VehicleActuationMsg
@@ -103,9 +105,10 @@ class ArduinoInterfaceNode(MPClabNode):
             self.state.hw.throttle = self.interface_params.throttle_off
             self.state.hw.steering = self.interface_params.steering_off
             self.disable_output()
-
-        self.input.t = t
-        barc_control_msg = self.populate_msg(VehicleActuation(), self.input)
+        
+        control = copy.deepcopy(self.input)
+        control.t = t
+        barc_control_msg = self.populate_msg(VehicleActuationMsg(), control)
         self.barc_control_pub.publish(barc_control_msg)
 
         if self.imu:

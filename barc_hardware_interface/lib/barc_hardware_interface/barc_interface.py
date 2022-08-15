@@ -164,6 +164,7 @@ class BarcArduinoInterface():
         self.serial.write(b'B4000\n')
         
         msg = self.serial.read_until(expected='\r\n'.encode('ascii'), size=100).decode('ascii')
+        # self.print_method(msg)
         a_start = msg.find('a')
         w_start = msg.find('w')
         if a_start < 0 or w_start < 0:
@@ -181,15 +182,18 @@ class BarcArduinoInterface():
             return None, None
         if wx_start < 0 or wy_start < 0 or wz_start < 0:
             return None, None
-
-        ax = float(a_msg[ax_start+1:ay_start])*9.81
-        ay = float(a_msg[ay_start+1:az_start])*9.81
-        az = float(a_msg[az_start+1:wx_start])*9.81
-        a = [ax, ay, az]
-        wx = float(w_msg[wx_start+1:wy_start])
-        wy = float(w_msg[wy_start+1:wz_start])
-        wz = float(w_msg[wz_start+1:])
-        w = [wx, wy, wz]
+        
+        try:
+            ax = float(a_msg[ax_start+1:ay_start])*9.81
+            ay = float(a_msg[ay_start+1:az_start])*9.81
+            az = float(a_msg[az_start+1:])*9.81
+            a = [ax, ay, az]
+            wx = float(w_msg[wx_start+1:wy_start])
+            wy = float(w_msg[wy_start+1:wz_start])
+            wz = float(w_msg[wz_start+1:])
+            w = [wx, wy, wz]
+        except:
+            return None, None
         
         return a, w
     
