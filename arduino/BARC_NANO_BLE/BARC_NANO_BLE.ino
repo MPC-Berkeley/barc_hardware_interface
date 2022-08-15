@@ -62,6 +62,12 @@ float ax_smooth = 0.0;
 float ay_smooth = 0.0;
 float az_smooth = 0.0;
 
+float alpha_w = 0.5;
+float wx, wy, wz;
+float wx_smooth = 0.0;
+float wy_smooth = 0.0;
+float wz_smooth = 0.0;
+
 double v_fr, v_fl, v_rr, v_rl;
 Encoders fr(ENC_FR_A, ENC_FR_B);
 Encoders fl(ENC_FL_A, ENC_FL_B);
@@ -212,13 +218,28 @@ void check_serial(){
           Serial.print("z");
           Serial.println(az_smooth, NUM_FLOATING_POINT_DECIMALS);
           break;
+
+        case '3': // read gyroscope
+          if (IMU.gyroscopeAvailable()) {
+            IMU.readGyroscope(wx, wy, wz);
+            wx_smooth = (1-alpha_w)*wx_smooth + alpha_w*wx;
+            wy_smooth = (1-alpha_w)*wy_smooth + alpha_w*wy;
+            wz_smooth = (1-alpha_w)*wz_smooth + alpha_w*wz;
+          }
+          Serial.print("B3x");
+          Serial.print(wx_smooth, NUM_FLOATING_POINT_DECIMALS);
+          Serial.print("y");
+          Serial.print(wy_smooth, NUM_FLOATING_POINT_DECIMALS);
+          Serial.print("z");
+          Serial.println(wz_smooth, NUM_FLOATING_POINT_DECIMALS);
+          break;
           
-        case '3': // read encoder
+        case '4': // read encoder
           v_fr = fr.getSpeedAvg();
           v_fl = fl.getSpeedAvg();
           v_rr = rr.getSpeedAvg();
           v_rl = rl.getSpeedAvg(); 
-          Serial.print("B3a");
+          Serial.print("B4a");
           Serial.print(v_fl, NUM_FLOATING_POINT_DECIMALS);
           Serial.print("b");
           Serial.print(v_fr, NUM_FLOATING_POINT_DECIMALS);

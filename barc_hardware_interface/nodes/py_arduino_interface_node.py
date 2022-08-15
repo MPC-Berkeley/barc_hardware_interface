@@ -2,7 +2,7 @@
 
 import rclpy
 from rclpy.qos import qos_profile_sensor_data
-from geometry_msgs.msg import Vector3Stamped
+from sensor_msgs.msg import Imu
 
 from barc_hardware_interface.barc_interface import BarcArduinoInterface, BarcArduinoInterfaceConfig
 
@@ -56,9 +56,9 @@ class ArduinoInterfaceNode(MPClabNode):
             qos_profile_sensor_data)
 
         if self.imu:
-            self.barc_accel_pub = self.create_publisher(
-                Vector3Stamped,
-                'barc_accel',
+            self.barc_imu_pub = self.create_publisher(
+                Imu,
+                'barc_imu',
                 qos_profile_sensor_data
             )
 
@@ -110,13 +110,20 @@ class ArduinoInterfaceNode(MPClabNode):
 
         if self.imu:
             ax, ay, az = self.interface.read_accel()
+            wx, wy, wz = self.interface.read_gyro()
             
-            accel_msg = Vector3Stamped()
-            accel_msg.header.stamp = stamp
-            accel_msg.vector.x = -ay
-            accel_msg.vector.y = -ax
-            accel_msg.vector.z = -az
-            self.barc_accel_pub.publish(accel_msg)        
+            imu_msg = Imu()
+            imu_msg.header.stamp = stamp
+
+            imu_msg.linear_acceleration.x = ay
+            imu_msg.linear_acceleration.y = ax
+            imu_msg.linear_acceleration.z = az
+
+            imu_msg.angular_velocity.x = wy
+            imu_msg.angular_velocity.y = wx
+            imu_msg.angular_velocity.z = wz
+
+            self.barc_imu_pub.publish(imu_msg)  
 
         return
 

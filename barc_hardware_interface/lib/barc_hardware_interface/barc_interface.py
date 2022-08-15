@@ -129,7 +129,7 @@ class BarcArduinoInterface():
     def read_encoders(self):
         self.serial.flushOutput()
         self.serial.flushInput()
-        self.serial.write(b'B3000\n')
+        self.serial.write(b'B4000\n')
         
         msg = self.serial.read_until(expected='\r\n'.encode('ascii'), size=50).decode('ascii')
         fl_start = msg.find('a')
@@ -159,6 +159,22 @@ class BarcArduinoInterface():
         ay = float(msg[ay_start+1:az_start])*9.81
         az = float(msg[az_start+1:])*9.81
         return ax, ay, az
+
+    def read_gyro(self):
+        self.serial.flushOutput()
+        self.serial.flushInput()
+        self.serial.write(b'B3000\n')
+        
+        msg = self.serial.read_until(expected='\r\n'.encode('ascii'), size=50).decode('ascii')
+        wx_start = msg.find('x')
+        wy_start = msg.find('y')
+        wz_start = msg.find('z')
+        if wx_start < 0 or wy_start < 0 or wz_start < 0:
+            return None
+        wx = float(msg[wx_start+1:wy_start])
+        wy = float(msg[wy_start+1:wz_start])
+        wz = float(msg[wz_start+1:])
+        return wx, wy, wz
         
     def angle_to_pwm(self, steering_angle):
         if self.config.steering_map_mode == 'affine':
