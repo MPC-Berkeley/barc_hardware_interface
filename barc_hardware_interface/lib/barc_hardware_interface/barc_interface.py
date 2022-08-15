@@ -126,24 +126,6 @@ class BarcArduinoInterface():
         self.serial.write(b'AB000\n')
         return
     
-    def read_encoders(self):
-        self.serial.flushOutput()
-        self.serial.flushInput()
-        self.serial.write(b'B4000\n')
-        
-        msg = self.serial.read_until(expected='\r\n'.encode('ascii'), size=50).decode('ascii')
-        fl_start = msg.find('a')
-        fr_start = msg.find('b')
-        rl_start = msg.find('c')
-        rr_start = msg.find('d')
-        if fl_start < 0 or fr_start < 0 or rl_start < 0 or rr_start < 0:
-            return None
-        v_fl = float(msg[fl_start+1:fr_start])
-        v_fr = float(msg[fr_start+1:rl_start])
-        v_rl = float(msg[rl_start+1:rr_start])
-        v_rr = float(msg[rr_start+1:])
-        return v_fl, v_fr, v_rl, v_rr
-    
     def read_accel(self):
         self.serial.flushOutput()
         self.serial.flushInput()
@@ -175,7 +157,51 @@ class BarcArduinoInterface():
         wy = float(msg[wy_start+1:wz_start])
         wz = float(msg[wz_start+1:])
         return wx, wy, wz
+
+    def read_imu(self):
+        self.serial.flushOutput()
+        self.serial.flushInput()
+        self.serial.write(b'B4000\n')
         
+        msg = self.serial.read_until(expected='\r\n'.encode('ascii'), size=50).decode('ascii')
+        ax_start = msg.find('ax')
+        ay_start = msg.find('ay')
+        az_start = msg.find('az')
+        wx_start = msg.find('wx')
+        wy_start = msg.find('wy')
+        wz_start = msg.find('wz')
+        if ax_start < 0 or ay_start < 0 or az_start < 0:
+            return None
+        if wx_start < 0 or wy_start < 0 or wz_start < 0:
+            return None
+        ax = float(msg[ax_start+1:ay_start])*9.81
+        ay = float(msg[ay_start+1:az_start])*9.81
+        az = float(msg[az_start+1:wx_start])*9.81
+        a = [ax, ay, az]
+        wx = float(msg[wx_start+1:wy_start])
+        wy = float(msg[wy_start+1:wz_start])
+        wz = float(msg[wz_start+1:])
+        w = [wx, wy, wz]
+        return a, w
+    
+    def read_encoders(self):
+        self.serial.flushOutput()
+        self.serial.flushInput()
+        self.serial.write(b'B5000\n')
+        
+        msg = self.serial.read_until(expected='\r\n'.encode('ascii'), size=50).decode('ascii')
+        fl_start = msg.find('a')
+        fr_start = msg.find('b')
+        rl_start = msg.find('c')
+        rr_start = msg.find('d')
+        if fl_start < 0 or fr_start < 0 or rl_start < 0 or rr_start < 0:
+            return None
+        v_fl = float(msg[fl_start+1:fr_start])
+        v_fr = float(msg[fr_start+1:rl_start])
+        v_rl = float(msg[rl_start+1:rr_start])
+        v_rr = float(msg[rr_start+1:])
+        return v_fl, v_fr, v_rl, v_rr
+
     def angle_to_pwm(self, steering_angle):
         if self.config.steering_map_mode == 'affine':
             offset, gain = self.config.steering_map_params
