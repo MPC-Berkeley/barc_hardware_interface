@@ -12,7 +12,7 @@ from mpclab_common.msg import VehicleStateMsg, VehicleActuationMsg
 from mpclab_common.pytypes import NodeParamTemplate, VehicleActuation, VehicleState, BodyLinearAcceleration
 from mpclab_common.mpclab_base_nodes import MPClabNode
 
-MSG_TIMEOUT_CTRL = 0.2
+MSG_TIMEOUT_CTRL = 0.3
 
 class InterfaceNodeParams(NodeParamTemplate):
     def __init__(self):
@@ -112,26 +112,25 @@ class ArduinoInterfaceNode(MPClabNode):
         self.barc_control_pub.publish(barc_control_msg)
 
         if self.imu:
-            # a = self.interface.read_accel()
+            a = self.interface.read_accel()
+            w = None
             # w = self.interface.read_gyro()
-            a, w = self.interface.read_imu()
-
-            if a is not None and w is not None:
+            # a, w = self.interface.read_imu()
+            
+            imu_msg = Imu()
+            imu_msg.header.stamp = stamp
+            if a is not None:
                 ax, ay, az = a
-                wx, wy, wz = w
-                
-                imu_msg = Imu()
-                imu_msg.header.stamp = stamp
-
                 imu_msg.linear_acceleration.x = ay
                 imu_msg.linear_acceleration.y = ax
                 imu_msg.linear_acceleration.z = az
-
+            if w is not None:
+                wx, wy, wz = w
                 imu_msg.angular_velocity.x = wy
                 imu_msg.angular_velocity.y = wx
                 imu_msg.angular_velocity.z = wz
 
-                self.barc_imu_pub.publish(imu_msg)  
+            self.barc_imu_pub.publish(imu_msg)  
 
         return
 

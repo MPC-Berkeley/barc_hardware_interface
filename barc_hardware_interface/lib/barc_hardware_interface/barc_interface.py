@@ -87,8 +87,9 @@ class BarcArduinoInterface():
             steering = x.u.u_steer
         else:
             raise(ValueError("Control mode must be 'torque', 'velocity', or 'direct'"))
-        
+        #self.print_method(str(throttle))
         if throttle > 1.2*self.config.throttle_max or throttle < 0.8*self.config.throttle_min:
+            self.print_method(f'Throttle limits exceeded, setting to {self.config.throttle_off}')
             throttle = self.config.throttle_off
         if steering > 1.2*self.config.steering_max or steering < 0.8*self.config.steering_min:
             steering = self.config.steering_off
