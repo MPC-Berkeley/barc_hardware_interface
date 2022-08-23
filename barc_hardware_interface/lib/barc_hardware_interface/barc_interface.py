@@ -71,17 +71,17 @@ class BarcArduinoInterface():
 
     def write_output(self, x: VehicleState):
         if self.config.control_mode == 'torque':
+            steering = self.angle_to_pwm(x.u.u_steer)
             if self.config.throttle_map_mode == 'integration':
                 self.v += self.dt*x.u.u_a
-                throttle = self.v_to_pwm(self.v)
+                throttle = self.v_to_pwm(self.v, steering)
             elif self.config.throttle_map_mode == 'affine':
                 throttle = self.a_to_pwm(x.u.u_a)
             else:
                 raise(ValueError("Throttle map mode must be 'affine', 'integration'"))
-            steering = self.angle_to_pwm(x.u.u_steer)
         elif self.config.control_mode == 'velocity':
-            throttle = self.v_to_pwm(x.u.u_a)
             steering = self.angle_to_pwm(x.u.u_steer)
+            throttle = self.v_to_pwm(x.u.u_a, steering)
         elif self.config.control_mode == 'direct':
             throttle = x.u.u_a
             steering = x.u.u_steer
@@ -235,10 +235,15 @@ class BarcArduinoInterface():
             raise(ValueError("Steering map mode must be 'affine' or 'arctan'"))
         return steer_pwm
     
-    def v_to_pwm(self, v):
-        # K = 55.37439384702125
-        K = self.config.throttle_map_params[0]
-        throttle_pwm = self.config.throttle_off + K * v
+    # def v_to_pwm(self, v):
+    #     # K = 55.37439384702125
+    #     K = self.config.throttle_map_params[0]
+    #     throttle_pwm = self.config.throttle_off + K * v
+    #     return throttle_pwm
+
+    def v_to_pwm(self, v, steer_pwm):
+        K, L = self.config.throttle_map_params
+        throttle_pwm = self.config.throttle_off + (v + L*(steer_pwm-self.config.steering_off)**2)/K
         return throttle_pwm
 
     def a_to_pwm(self, a):
