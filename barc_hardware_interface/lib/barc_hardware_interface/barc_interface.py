@@ -203,7 +203,7 @@ class BarcArduinoInterface():
         self.serial.flushInput()
         self.serial.write(b'B5000\n')
         
-        msg = self.serial.read_until(expected='\r\n'.encode('ascii'), size=50).decode('ascii')
+        msg = self.serial.read_until(expected='\r\n'.encode('ascii'), size=100).decode('ascii')
         fl_start = msg.find('a')
         fr_start = msg.find('b')
         rl_start = msg.find('c')

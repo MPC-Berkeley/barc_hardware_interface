@@ -8,8 +8,8 @@ import copy
 
 from barc_hardware_interface.barc_interface import BarcArduinoInterface, BarcArduinoInterfaceConfig
 
-from mpclab_common.msg import VehicleStateMsg, VehicleActuationMsg
-from mpclab_common.pytypes import NodeParamTemplate, VehicleActuation, VehicleState, BodyLinearAcceleration
+from mpclab_common.msg import VehicleStateMsg, VehicleActuationMsg, DriveStateMsg
+from mpclab_common.pytypes import NodeParamTemplate, VehicleActuation, VehicleState
 from mpclab_common.mpclab_base_nodes import MPClabNode
 
 MSG_TIMEOUT_CTRL = 0.3
@@ -18,6 +18,7 @@ class InterfaceNodeParams(NodeParamTemplate):
     def __init__(self):
         self.dt                 = 0.01
         self.imu                = False
+        self.enc                = False
         self.interface_params   = BarcArduinoInterfaceConfig()
         
 class ArduinoInterfaceNode(MPClabNode):
@@ -61,6 +62,13 @@ class ArduinoInterfaceNode(MPClabNode):
             self.barc_imu_pub = self.create_publisher(
                 Imu,
                 'barc_imu',
+                qos_profile_sensor_data
+            )
+
+        if self.enc:
+            self.barc_enc_pub = self.create_publisher(
+                DriveStateMsg,
+                'barc_enc',
                 qos_profile_sensor_data
             )
 
@@ -129,8 +137,18 @@ class ArduinoInterfaceNode(MPClabNode):
                 imu_msg.angular_velocity.x = wy
                 imu_msg.angular_velocity.y = wx
                 imu_msg.angular_velocity.z = wz
-
             self.barc_imu_pub.publish(imu_msg)  
+        
+        if self.enc:
+            e = self.interface.read_encoders()
+            enc_msg = DriveStateMsg()
+            if e is not None:
+                e_fl, e_fr, e_rl, e_rr = e
+                enc_msg.wfl = e_fl
+                enc_msg.wfr = e_fr
+                enc_msg.wrl = e_rl
+                enc_msg.wrr = e_rr
+            self.barc_enc_pub.publish(enc_msg)
 
         return
 
