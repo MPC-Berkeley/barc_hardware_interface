@@ -198,7 +198,7 @@ class BarcArduinoInterface():
         
         return a, w
     
-    def read_encoders(self):
+    def read_encoders_velocity(self):
         self.serial.flushOutput()
         self.serial.flushInput()
         self.serial.write(b'B5000\n')
@@ -215,6 +215,24 @@ class BarcArduinoInterface():
         v_rl = float(msg[rl_start+1:rr_start])
         v_rr = float(msg[rr_start+1:])
         return v_fl, v_fr, v_rl, v_rr
+
+    def read_encoders_count(self):
+        self.serial.flushOutput()
+        self.serial.flushInput()
+        self.serial.write(b'B6000\n')
+        
+        msg = self.serial.read_until(expected='\r\n'.encode('ascii'), size=100).decode('ascii')
+        fl_start = msg.find('a')
+        fr_start = msg.find('b')
+        rl_start = msg.find('c')
+        rr_start = msg.find('d')
+        if fl_start < 0 or fr_start < 0 or rl_start < 0 or rr_start < 0:
+            return None
+        c_fl = int(float.fromhex(msg[fl_start+1:fr_start]))
+        c_fr = int(float.fromhex(msg[fr_start+1:rl_start]))
+        c_rl = int(float.fromhex(msg[rl_start+1:rr_start]))
+        c_rr = int(float.fromhex(msg[rr_start+1:]))
+        return c_fl, c_fr, c_rl, c_rr
 
     def angle_to_pwm(self, steering_angle):
         if self.config.steering_map_mode == 'affine':

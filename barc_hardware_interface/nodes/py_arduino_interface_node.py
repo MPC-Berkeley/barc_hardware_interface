@@ -140,14 +140,14 @@ class ArduinoInterfaceNode(MPClabNode):
             self.barc_imu_pub.publish(imu_msg)  
         
         if self.enc:
-            e = self.interface.read_encoders()
+            c = self.interface.read_encoders_count()
             enc_msg = DriveStateMsg()
-            if e is not None:
-                e_fl, e_fr, e_rl, e_rr = e
-                enc_msg.wfl = e_fl
-                enc_msg.wfr = e_fr
-                enc_msg.wrl = e_rl
-                enc_msg.wrr = e_rr
+            if c is not None:
+                c_fl, c_fr, c_rl, c_rr = c
+                enc_msg.wfl = c_fl
+                enc_msg.wfr = c_fr
+                enc_msg.wrl = c_rl
+                enc_msg.wrr = c_rr
             self.barc_enc_pub.publish(enc_msg)
 
         return
