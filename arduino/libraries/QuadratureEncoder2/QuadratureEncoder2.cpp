@@ -1,5 +1,22 @@
 #include "QuadratureEncoder2.h"
 
+//Timer
+#include "NRF52_MBED_TimerInterrupt.h"
+#include "NRF52_MBED_ISR_Timer.h"
+#define TIMER_INTERRUPT_DEBUG         0
+#define _TIMERINTERRUPT_LOGLEVEL_     3
+#define TIMER_INTERVAL_S        1
+
+#define ENCODER_RESOLUTION 0.1 //10 counts per revolution == 0.1 Revolutions per count
+#define WHEEL_RADIUS 0.0325 //meters: From Enrico's library, I'll update when I get back - Han
+#define PI 3.14159265358979323846
+
+NRF52_MBED_Timer ITimer(NRF_TIMER_3);
+bool attachInterruptSuccess = ITimer.attachInterruptInterval(TIMER_INTERVAL_S * 1000000, Encoders::timerISR); //Not currently used: add later for debugging
+
+//Make speed multiplier so we don't need to do this calculation everytime
+static long _speed_multiplier = (ENCODER_RESOLUTION * 2*PI*WHEEL_RADIUS)/TIMER_INTERVAL_S; //[meters/(seconds*counts)]
+
 // initialize all instance of encoder to null.
 Encoders *Encoders::_instances[MAX_NUM_ENCODERS] = {NULL, NULL,NULL, NULL};
 uint8_t Encoders::_whichEncoder = 0;
@@ -60,13 +77,21 @@ void Encoders::encoderCountB() {
   }
 }
 
-long Encoders::getEncoderCount(){
+double Encoders::getEncoderCount(){
   return this->_encoderCount;
 }
 
 double Encoders::getSpeed(){
-  double speed = _encoderCount;
+  return _speed * _speed_multiplier;
+}
+
+void Encoders::calculateSpeed(){
+  _speed = _encoderCount; //[Counts] * ([Revs/Count] * 2pi*R [m/Rev] / Interval [s]) = [m/s]
+  this->_encoderCountBuffer.add(_speed);
   this->_encoderCount = 0;
-  return speed;
+}
+
+double Encoders::getSpeedAvg() {
+  return _encoderCountBuffer.average_value() * _speed_multiplier;
 }
 

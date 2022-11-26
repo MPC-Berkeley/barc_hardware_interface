@@ -19,24 +19,8 @@
 
 Encoders fl(ENC_FL_A, ENC_FL_B);
 
-//Timer Settings
-#define TIMER_INTERRUPT_DEBUG         0
-#define _TIMERINTERRUPT_LOGLEVEL_     3
-#include "NRF52_MBED_TimerInterrupt.h"
-#define TIMER0_INTERVAL_MS        1000
-NRF52_MBED_Timer ITimer0(NRF_TIMER_3);
-
-double currentSpeed = 0;
-
-void TimerHandler0() {
-  currentSpeed = fl.getSpeed();
-}
- 
 void setup() {
   Serial.begin(BAUD_RATE);
-  if (!ITimer0.attachInterruptInterval(TIMER0_INTERVAL_MS * 1000, TimerHandler0)) {
-    Serial.println("Can't set ITimer0. Select another freq. or timer");
-  }
   pinMode(PWM, OUTPUT);
   pinMode(DIR, OUTPUT);
   pinMode(SLP, OUTPUT);
@@ -44,10 +28,9 @@ void setup() {
 }
 
 void loop() {
-  Serial.println(currentSpeed);
-  drive_backward(20);
+//  drive_backward(20);
 //  drive_forward(20);
-//Serial.println(fl.getEncoderCount());
+Serial.println(fl.getSpeedAvg());
 }
 
 void drive_forward(int PWM_value) {

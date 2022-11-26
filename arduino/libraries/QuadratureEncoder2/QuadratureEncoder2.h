@@ -2,7 +2,8 @@
 #define Encoder_h
 
 #include "Arduino.h"
-
+#include "circular_buffer.hpp"
+#define BUFFER_SIZE 6
 #define MAX_NUM_ENCODERS 4
 
 class Encoders{
@@ -16,6 +17,12 @@ class Encoders{
     static void interruptEncoder1B(){
       if(Encoders::_instances[0] != NULL)
       Encoders::_instances[0]->encoderCountB();
+    }
+    static void timerISR(){
+      for (int i = 0; i < MAX_NUM_ENCODERS; i++) {
+        if(Encoders::_instances[i] != NULL)
+        Encoders::_instances[i]->calculateSpeed();
+      }
     }
     // static void interruptEncoder2A(){
     //   if(Encoders::_instances[1] != NULL)
@@ -42,11 +49,12 @@ class Encoders{
     //   if(Encoders::_instances[3] != NULL)
     //   Encoders::_instances[3]->encoderCountB();
     // }
-    
     void encoderCountA();
     void encoderCountB();
-    long getEncoderCount();
+    double getEncoderCount();
     double getSpeed();
+    double getSpeedAvg();
+    void calculateSpeed();
     static Encoders *_instances[MAX_NUM_ENCODERS];
     
   private:
@@ -55,11 +63,13 @@ class Encoders{
     uint8_t _encoderPINB; 
     double _ticks_per_rev = 5;
     double _radius = 0.0325; 
-    volatile long _encoderCount = 0;
+    volatile double _encoderCount = 0;
     volatile long _AcurrTime;
     volatile long _BcurrTime;
     volatile long _lastRisingBTime = 0;
     volatile long _lastRisingATime = 0;
+    volatile double _speed = 0;
+    circular_buffer<double, BUFFER_SIZE> _encoderCountBuffer;
 };
 
 #endif
