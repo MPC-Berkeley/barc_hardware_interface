@@ -17,7 +17,10 @@
 #define PWM D4
 #define SLP D3
 
-Encoders fl(ENC_FL_A, ENC_FL_B);
+Encoders fl(ENC_FL_A, ENC_FL_B, false);
+Encoders fr(ENC_FR_A, ENC_FR_B, true);
+Encoders rl(ENC_RL_A, ENC_RL_B, false);
+Encoders rr(ENC_RR_A, ENC_RR_B, true);
 
 void setup() {
   Serial.begin(BAUD_RATE);
@@ -28,17 +31,33 @@ void setup() {
 }
 
 void loop() {
-//  drive_backward(20);
-//  drive_forward(20);
-Serial.println(fl.getSpeedAvg());
+  drive_forward(60);
+  Serial.print("v_fl: ");
+  Serial.print(fl.getRPMAvg(), NUM_FLOATING_POINT_DECIMALS);
+  Serial.print("v_fr: ");
+  Serial.print(fr.getRPMAvg(), NUM_FLOATING_POINT_DECIMALS);
+  Serial.print("v_rl: ");
+  Serial.print(rl.getRPMAvg(), NUM_FLOATING_POINT_DECIMALS);
+  Serial.print("v_rr: ");
+  Serial.println(rr.getRPMAvg(), NUM_FLOATING_POINT_DECIMALS);
 }
 
+void getSpeedAvg() {
+  Serial.print("v_fl: ");
+  Serial.print(fl.getSpeedAvg(), NUM_FLOATING_POINT_DECIMALS);
+  Serial.print("v_fr: ");
+  Serial.print(fr.getSpeedAvg(), NUM_FLOATING_POINT_DECIMALS);
+  Serial.print("v_rl: ");
+  Serial.print(rl.getSpeedAvg(), NUM_FLOATING_POINT_DECIMALS);
+  Serial.print("v_rr: ");
+  Serial.println(rr.getSpeedAvg(), NUM_FLOATING_POINT_DECIMALS);
+}
 void drive_forward(int PWM_value) {
-  digitalWrite(DIR, HIGH);
+  digitalWrite(DIR, LOW);
   analogWrite(PWM,PWM_value);
 }
 
 void drive_backward(int PWM_value) {
-  digitalWrite(DIR, LOW);
+  digitalWrite(DIR, HIGH);
   analogWrite(PWM,PWM_value);
 }

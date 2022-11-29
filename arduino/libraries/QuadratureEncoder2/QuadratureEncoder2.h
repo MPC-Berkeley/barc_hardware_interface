@@ -3,12 +3,12 @@
 
 #include "Arduino.h"
 #include "circular_buffer.hpp"
-#define BUFFER_SIZE 6
+#define BUFFER_SIZE 20
 #define MAX_NUM_ENCODERS 4
 
 class Encoders{
   public:  
-    Encoders(byte pinA, byte pinB);
+    Encoders(byte pinA, byte pinB, bool reverse);
 
     static void interruptEncoder1A(){
       if(Encoders::_instances[0] != NULL)
@@ -18,42 +18,42 @@ class Encoders{
       if(Encoders::_instances[0] != NULL)
       Encoders::_instances[0]->encoderCountB();
     }
+    static void interruptEncoder2A(){
+      if(Encoders::_instances[1] != NULL)
+      Encoders::_instances[1]->encoderCountA();
+    }
+    static void interruptEncoder2B(){
+      if(Encoders::_instances[1] != NULL)
+      Encoders::_instances[1]->encoderCountB();
+    }
+    static void interruptEncoder3A(){
+      if(Encoders::_instances[2] != NULL)
+      Encoders::_instances[2]->encoderCountA();
+    }
+    static void interruptEncoder3B(){
+      if(Encoders::_instances[2] != NULL)
+      Encoders::_instances[2]->encoderCountB();
+    }
+    static void interruptEncoder4A(){
+      if(Encoders::_instances[3] != NULL)
+      Encoders::_instances[3]->encoderCountA();
+    }
+    static void interruptEncoder4B(){
+      if(Encoders::_instances[3] != NULL)
+      Encoders::_instances[3]->encoderCountB();
+    }
     static void timerISR(){
       for (int i = 0; i < MAX_NUM_ENCODERS; i++) {
         if(Encoders::_instances[i] != NULL)
         Encoders::_instances[i]->calculateSpeed();
       }
     }
-    // static void interruptEncoder2A(){
-    //   if(Encoders::_instances[1] != NULL)
-    //   Encoders::_instances[1]->encoderCountA();
-    // }
-    // static void interruptEncoder2B(){
-    //   if(Encoders::_instances[1] != NULL)
-    //   Encoders::_instances[1]->encoderCountB();
-    // }
-    // static void interruptEncoder3A(){
-    //   if(Encoders::_instances[2] != NULL)
-    //   Encoders::_instances[2]->encoderCountA();
-    // }
-    // static void interruptEncoder3B(){
-    //   if(Encoders::_instances[2] != NULL)
-
-    //   Encoders::_instances[2]->encoderCountB();
-    // }
-    // static void interruptEncoder4A(){
-    //   if(Encoders::_instances[3] != NULL)
-    //   Encoders::_instances[3]->encoderCountA();
-    // }
-    // static void interruptEncoder4B(){
-    //   if(Encoders::_instances[3] != NULL)
-    //   Encoders::_instances[3]->encoderCountB();
-    // }
     void encoderCountA();
     void encoderCountB();
     double getEncoderCount();
     double getSpeed();
     double getSpeedAvg();
+    double getRPMAvg();
     void calculateSpeed();
     static Encoders *_instances[MAX_NUM_ENCODERS];
     
