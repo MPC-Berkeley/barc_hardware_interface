@@ -19,6 +19,7 @@ class InterfaceNodeParams(NodeParamTemplate):
         self.dt                 = 0.01
         self.imu                = False
         self.enc                = False
+        self.enc_mode           = 'vel'
         self.interface_params   = BarcArduinoInterfaceConfig()
         
 class ArduinoInterfaceNode(MPClabNode):
@@ -140,7 +141,10 @@ class ArduinoInterfaceNode(MPClabNode):
             self.barc_imu_pub.publish(imu_msg)  
         
         if self.enc:
-            c = self.interface.read_encoders_count()
+            if self.enc_mode == 'vel':
+                c = self.interface.read_encoders_velocity()
+            elif self.enc_mode == 'count':
+                c = self.interface.read_encoders_count()
             enc_msg = DriveStateMsg()
             if c is not None:
                 c_fl, c_fr, c_rl, c_rr = c

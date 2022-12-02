@@ -1,24 +1,24 @@
 #include <Servo.h>
-#include <QuadratureEncoder.h>
+#include <QuadratureEncoder2.h>
 #include <Arduino_LSM9DS1.h>
 
 #define DEBUG        0
 
 // < BARC_Nano_Shield_v3
-#define THROTTLE_PIN D7
-#define DIRECTION_PIN D6
-#define MOTOR_SLEEP D8
-#define MOTOR_FAULT D9
-#define MOTOR_CURRENT A0
-#define STEERING_PIN D5
+//#define THROTTLE_PIN D7
+//#define DIRECTION_PIN D6
+//#define MOTOR_SLEEP D8
+//#define MOTOR_FAULT D9
+//#define MOTOR_CURRENT A0
+//#define STEERING_PIN D5
 
 // >= BARC_Nano_Shield_v3
-//#define THROTTLE_PIN D4
-//#define DIRECTION_PIN D5
-//#define MOTOR_SLEEP D3
-//#define MOTOR_FAULT D2
-//#define MOTOR_CURRENT A7
-//#define STEERING_PIN D12
+#define THROTTLE_PIN D4
+#define DIRECTION_PIN D5
+#define MOTOR_SLEEP D3
+#define MOTOR_FAULT D2
+#define MOTOR_CURRENT A7
+#define STEERING_PIN D12
 
 Servo steering_servo;
 
@@ -47,14 +47,14 @@ unsigned int throttle_v = THROTTLE_OFF;
 boolean throttle_dir = THROTTLE_FORWARD;
 unsigned int steering_us = STEERING_OFF;
 
-#define ENC_FL_A A5
-#define ENC_FL_B A6
-#define ENC_FR_A A2
-#define ENC_FR_B A1 // ! swapped order
-#define ENC_RL_A D4
-#define ENC_RL_B D3
-#define ENC_RR_A D11 // ! swapped order
-#define ENC_RR_B D10 //D12
+#define ENC_FL_A A1
+#define ENC_FL_B A2
+#define ENC_FR_A D10
+#define ENC_FR_B D9
+#define ENC_RL_A A6
+#define ENC_RL_B A5
+#define ENC_RR_A D6
+#define ENC_RR_B D7
 
 float alpha = 0.5;
 float ax, ay, az;
@@ -69,10 +69,11 @@ float wy_smooth = 0.0;
 float wz_smooth = 0.0;
 
 double v_fr, v_fl, v_rr, v_rl;
-Encoders fr(ENC_FR_A, ENC_FR_B);
-Encoders fl(ENC_FL_A, ENC_FL_B);
-Encoders rl(ENC_RL_A, ENC_RL_B);
-Encoders rr(ENC_RR_A, ENC_RR_B);
+long c_fr, c_fl, c_rr, c_rl;
+Encoders fr(ENC_FR_A, ENC_FR_B, true);
+Encoders fl(ENC_FL_A, ENC_FL_B, false);
+Encoders rl(ENC_RL_A, ENC_RL_B, false);
+Encoders rr(ENC_RR_A, ENC_RR_B, true);
  
 void setup() {
   Serial.begin(BAUD_RATE);
@@ -275,6 +276,21 @@ void check_serial(){
           Serial.print("d");
           Serial.println(v_rr, NUM_FLOATING_POINT_DECIMALS);
           break;
+
+//        case '6': // read encoder
+//          c_fr = fr.getEncoderCount();
+//          c_fl = fl.getEncoderCount();
+//          c_rr = rr.getEncoderCount();
+//          c_rl = rl.getEncoderCount(); 
+//          Serial.print("B6a");
+//          Serial.print(c_fl, HEX);
+//          Serial.print("b");
+//          Serial.print(c_fr, HEX);
+//          Serial.print("c");
+//          Serial.print(c_rl, HEX);
+//          Serial.print("d");
+//          Serial.println(c_rr, HEX);
+//          break;
           
         default:
           if (DEBUG){
