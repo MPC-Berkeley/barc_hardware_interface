@@ -1,11 +1,15 @@
-#define ENC_RR_A D12
-#define ENC_RR_B D11
-#define ENC_RL_A D4
-#define ENC_RL_B D3
-#define ENC_FR_A A1
-#define ENC_FR_B A2
-#define ENC_FL_A A5
-#define ENC_FL_B A6
+#define ENC_RR_A D6
+#define ENC_RR_B D7
+#define ENC_RL_A A6
+#define ENC_RL_B A5
+#define ENC_FR_A D10
+#define ENC_FR_B D9
+#define ENC_FL_A A1
+#define ENC_FL_B A2
+
+#define DIR D5
+#define PWM D4
+#define SLP D3
 
 void setup() {
   // put your setup code here, to run once:
@@ -17,10 +21,26 @@ void setup() {
   pinMode(ENC_FR_B, INPUT_PULLUP);
   pinMode(ENC_FL_A, INPUT_PULLUP);
   pinMode(ENC_FL_B, INPUT_PULLUP);
+  pinMode(PWM, OUTPUT);
+  pinMode(DIR, OUTPUT);
+  pinMode(SLP, OUTPUT);
+  digitalWrite(SLP, HIGH); //Keep motor driver ON
   Serial.begin(115200);
 }
 void loop() {
-  // put your main code here, to run repeatedly:
+  drive_backward(25);
+  log_data();
+}
+
+void log_data() {
+  Serial.print(digitalRead(ENC_FR_A));
+  Serial.print(",");
+  Serial.print(digitalRead(ENC_FR_B));
+  Serial.print(",");
+  Serial.println(millis());
+}
+
+void print_readings() {
   Serial.println("Front Left:");
   Serial.print(digitalRead(ENC_FL_A));
   Serial.print(",");
@@ -40,6 +60,14 @@ void loop() {
   Serial.print(digitalRead(ENC_RR_A));
   Serial.print(",");
   Serial.println(digitalRead(ENC_RR_B));
-  
-  delay(10);
+}
+
+void drive_forward(int PWM_value) {
+  digitalWrite(DIR, LOW);
+  analogWrite(PWM,PWM_value);
+}
+
+void drive_backward(int PWM_value) {
+  digitalWrite(DIR, HIGH);
+  analogWrite(PWM,PWM_value);
 }
