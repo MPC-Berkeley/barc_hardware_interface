@@ -86,7 +86,7 @@ class ArduinoInterfaceNode(MPClabNode):
 
         self.control_alive = True
 
-        self.t_meas = 0
+        self.t_meas = 0.0
 
         return
 
