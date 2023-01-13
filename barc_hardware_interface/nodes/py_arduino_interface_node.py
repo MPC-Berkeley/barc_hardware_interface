@@ -95,7 +95,7 @@ class ArduinoInterfaceNode(MPClabNode):
         self.last_msg_timestamp = self.clock.now().nanoseconds/1E9
         if not self.control_msg_start:
             self.control_msg_start = True
-        self.t_meas = msg.t_meas
+        self.t_meas = msg.timing.source_time
         return
 
     def state_callback(self, msg):
@@ -123,7 +123,11 @@ class ArduinoInterfaceNode(MPClabNode):
         control.t = t
         barc_control_msg = self.populate_msg(VehicleActuationMsg(), control)
         barc_control_msg.header.stamp = stamp
-        barc_control_msg.t_meas = self.t_meas
+        barc_control_msg.timing.step_start_time = t
+        barc_control_msg.timing.source_time = self.t_meas
+        tf = self.clock.now().nanoseconds/1E9
+        barc_control_msg.timing.publish_time = tf
+        barc_control_msg.timing.step_execution_time = tf - t
         self.barc_control_pub.publish(barc_control_msg)
 
         if self.imu:
