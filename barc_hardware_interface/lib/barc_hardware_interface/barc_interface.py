@@ -1,4 +1,3 @@
-from multiprocessing.sharedctypes import Value
 from serial import Serial
 from serial.tools import list_ports
 import numpy as np
