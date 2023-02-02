@@ -12,12 +12,13 @@ from mpclab_common.mpclab_base_nodes import MPClabNode
 from serial import Serial
 from serial.tools import list_ports
 
-MSG_TIMEOUT_CTRL = 0.3
+import time
+import multiprocess as mp
 
 class InterfaceNodeParams(NodeParamTemplate):
     def __init__(self):
         self.dt                 = 0.01
-        self.serial_port        = '/dev/ttyACM1'
+        self.serial_port        = '/dev/ttyACM0'
         self.baud_rate          = 115200
         self.device_name        = 'Mega'
         
@@ -25,7 +26,7 @@ class EncoderInterfaceNode(MPClabNode):
 
     def __init__(self):
         super().__init__('encoder_interface')
-        self.get_logger().info('Initializing low encoder interface node')
+        self.get_logger().info('Initializing encoder interface node')
         namespace = self.get_namespace()
 
         param_template = InterfaceNodeParams()
@@ -37,8 +38,7 @@ class EncoderInterfaceNode(MPClabNode):
                              baudrate     = self.baud_rate,
                              timeout      = self.dt,
                              writeTimeout = self.dt)
-
-        # Get handle to ROS clock
+        
         self.clock = self.get_clock()
         self.t_start = self.clock.now().nanoseconds/1E9
 
@@ -60,18 +60,23 @@ class EncoderInterfaceNode(MPClabNode):
         self.serial.flushOutput()
         self.serial.flushInput()
         
-        msg = self.serial.read_until(expected='\r\n'.encode('ascii'), size=100).decode('ascii')
+        try:
+            msg = self.serial.read(size=50).decode('ascii')
+        except:
+            return
+
         start = msg.find('&')
+        end = msg.find('\r\n', start)
         rl_start = msg.find('L', start)
         rr_start = msg.find('R', start)
-        if start < 0 or rl_start < 0 or rr_start < 0:
+        if start < 0 or end < 0:
             return
         else:
-            end = msg.find('&', start)
-            if end < 0:
-                end = len(msg)
-            v_rl = float(msg[rl_start+1:rr_start])
-            v_rr = float(msg[rr_start+1:end])
+            try:
+                v_rl = float(msg[rl_start+1:rr_start])
+                v_rr = float(msg[rr_start+1:end])
+            except:
+                return
 
         enc_msg = EncoderMsg()
         enc_msg.header.stamp = stamp
