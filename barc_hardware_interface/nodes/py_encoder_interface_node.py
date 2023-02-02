@@ -12,15 +12,12 @@ from mpclab_common.mpclab_base_nodes import MPClabNode
 from serial import Serial
 from serial.tools import list_ports
 
-import time
-import multiprocess as mp
-
 class InterfaceNodeParams(NodeParamTemplate):
     def __init__(self):
         self.dt                 = 0.01
         self.serial_port        = '/dev/ttyACM0'
         self.baud_rate          = 115200
-        self.device_name        = 'Mega'
+        self.device_name        = 'Due'
         
 class EncoderInterfaceNode(MPClabNode):
 
@@ -34,7 +31,15 @@ class EncoderInterfaceNode(MPClabNode):
         self.autoload_parameters(param_template, namespace, verbose=False)
         
         # Get arduino port
-        self.serial = Serial(port         = self.serial_port,
+        dev = None
+        ports = list(list_ports.comports())
+        for p in ports:
+            if self.config.device_name in p.description:
+                dev = p.device
+        if dev is None:
+            dev = self.serial_port
+
+        self.serial = Serial(port         = dev,
                              baudrate     = self.baud_rate,
                              timeout      = self.dt,
                              writeTimeout = self.dt)
