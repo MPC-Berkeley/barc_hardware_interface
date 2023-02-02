@@ -34,7 +34,7 @@ class EncoderInterfaceNode(MPClabNode):
         dev = None
         ports = list(list_ports.comports())
         for p in ports:
-            if self.config.device_name in p.description:
+            if self.device_name in p.description:
                 dev = p.device
         if dev is None:
             dev = self.serial_port
