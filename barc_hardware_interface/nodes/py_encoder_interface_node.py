@@ -62,13 +62,16 @@ class EncoderInterfaceNode(MPClabNode):
         
         msg = self.serial.read_until(expected='\r\n'.encode('ascii'), size=100).decode('ascii')
         start = msg.find('&')
-        rl_start = msg.find('L')
-        rr_start = msg.find('R')
+        rl_start = msg.find('L', start)
+        rr_start = msg.find('R', start)
         if start < 0 or rl_start < 0 or rr_start < 0:
             return
         else:
+            end = msg.find('&', start)
+            if end < 0:
+                end = len(msg)
             v_rl = float(msg[rl_start+1:rr_start])
-            v_rr = float(msg[rr_start+1:])
+            v_rr = float(msg[rr_start+1:end])
 
         enc_msg = EncoderMsg()
         enc_msg.header.stamp = stamp
