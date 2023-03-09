@@ -16,13 +16,13 @@ void setup() {
 
 void loop() {
   //Drive Forward
-  analogWrite(PWM, 50);
-  digitalWrite(DIR, HIGH);
-  delay(2000);
-
-
-  //Drive backward
-  analogWrite(PWM, 50);
+  analogWrite(PWM, 30);
   digitalWrite(DIR, LOW);
-  delay(2000);
+//  delay(2000);
+//
+//
+//  //Drive backward
+//  analogWrite(PWM, );
+//  digitalWrite(DIR, LOW);
+//  delay(2000);
 }

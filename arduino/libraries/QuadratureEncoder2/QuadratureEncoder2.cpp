@@ -55,6 +55,7 @@ Encoders::Encoders(byte pinA, byte pinB, bool reverse){
 }
 
 void Encoders::encoderCountA() {
+  int edge = digitalRead(this->_encoderPINA);
     long _prevTime = this->_AcurrTime;
     _AcurrTime = micros();
     this->_lastRisingATime = _AcurrTime;

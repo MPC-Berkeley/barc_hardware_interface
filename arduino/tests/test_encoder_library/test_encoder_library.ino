@@ -31,7 +31,7 @@ void setup() {
 }
 
 void loop() {
-  drive_forward(60);
+  drive_forward(10);
   Serial.print("v_fl: ");
   Serial.print(fl.getRPMAvg(), NUM_FLOATING_POINT_DECIMALS);
   Serial.print("v_fr: ");

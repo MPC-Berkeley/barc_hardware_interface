@@ -28,8 +28,16 @@ void setup() {
   Serial.begin(115200);
 }
 void loop() {
-  drive_backward(25);
-  log_data();
+  drive_forward(10);
+  visualize_data();
+}
+
+void visualize_data() {
+  Serial.print("A:");
+  Serial.print(digitalRead(ENC_FR_A));
+  Serial.print(",");
+  Serial.print("B:");
+  Serial.println(digitalRead(ENC_FR_B));
 }
 
 void log_data() {
