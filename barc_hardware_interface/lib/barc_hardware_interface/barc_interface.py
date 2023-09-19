@@ -259,8 +259,12 @@ class BarcArduinoInterface():
     #     return throttle_pwm
 
     def v_to_pwm(self, v, steer_pwm):
-        K, L = self.config.throttle_map_params
-        throttle_pwm = self.config.throttle_off + (v + L*(steer_pwm-self.config.steering_off)**2)/K
+        Kp, Kn, Lp, Ln = self.config.throttle_map_params
+        # throttle_pwm = self.config.throttle_off + (v + L*(steer_pwm-self.config.steering_off)**2)/K
+        if v >= 0:
+            throttle_pwm = self.config.throttle_off + (v/(Kp-Lp*(steer_pwm-self.config.steering_off)**2))
+        else:
+            throttle_pwm = self.config.throttle_off + (v/(Kn-Ln*(steer_pwm-self.config.steering_off)**2))
         return throttle_pwm
 
     def a_to_pwm(self, a):

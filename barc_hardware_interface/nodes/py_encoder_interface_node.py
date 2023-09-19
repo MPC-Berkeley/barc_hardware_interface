@@ -69,17 +69,23 @@ class EncoderInterfaceNode(MPClabNode):
             msg = self.serial.read(size=50).decode('ascii')
         except:
             return
+        
+        #self.get_logger().info(str(msg))
 
         start = msg.find('&')
         end = msg.find('\r\n', start)
-        rl_start = msg.find('L', start)
-        rr_start = msg.find('R', start)
+        rl_start = msg.find('RL', start)
+        rr_start = msg.find('RR', start)
+        fl_start = msg.find('FL', start)
+        fr_start = msg.find('FR', start)
         if start < 0 or end < 0:
             return
         else:
             try:
-                v_rl = float(msg[rl_start+1:rr_start])
-                v_rr = float(msg[rr_start+1:end])
+                v_rl = float(msg[rl_start+2:rr_start])
+                v_rr = float(msg[rr_start+2:fl_start])
+                v_fl = float(msg[fl_start+2:fr_start])
+                v_fr = float(msg[fr_start+2:end])
             except:
                 return
 
@@ -87,6 +93,8 @@ class EncoderInterfaceNode(MPClabNode):
         enc_msg.header.stamp = stamp
         enc_msg.bl = v_rl
         enc_msg.br = v_rr
+        enc_msg.fl = v_fl
+        enc_msg.fr = v_fr
         self.barc_enc_pub.publish(enc_msg)
 
         return
