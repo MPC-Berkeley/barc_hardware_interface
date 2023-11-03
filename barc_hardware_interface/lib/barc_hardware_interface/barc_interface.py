@@ -95,9 +95,12 @@ class BarcArduinoInterface():
         throttle = int(max(min(throttle, self.config.throttle_max), self.config.throttle_min))
         steering = int(max(min(steering, self.config.steering_max), self.config.steering_min))
         
-        self.serial.flushOutput()
-        self.serial.write(b'A0%03d\n'%(throttle - 1000))
-        self.serial.write(b'A1%03d\n'%(steering - 1000))
+        try:
+            self.serial.flushOutput()
+            self.serial.write(b'A0%03d\n'%(throttle - 1000))
+            self.serial.write(b'A1%03d\n'%(steering - 1000))
+        except Exception as e:
+            self.print_method(f'In write_output: {str(e)}')
 
         return throttle, steering
     
@@ -127,75 +130,87 @@ class BarcArduinoInterface():
         return
     
     def read_accel(self):
-        self.serial.flushOutput()
-        self.serial.flushInput()
-        self.serial.write(b'B2000\n')
-        
-        msg = self.serial.read_until(expected='\r\n'.encode('ascii'), size=50).decode('ascii')
-        ax_start = msg.find('x')
-        ay_start = msg.find('y')
-        az_start = msg.find('z')
-        if ax_start < 0 or ay_start < 0 or az_start < 0:
+        try:
+            self.serial.flushOutput()
+            self.serial.flushInput()
+            self.serial.write(b'B2000\n')
+            
+            msg = self.serial.read_until(expected='\r\n'.encode('ascii'), size=50).decode('ascii')
+            ax_start = msg.find('x')
+            ay_start = msg.find('y')
+            az_start = msg.find('z')
+            if ax_start < 0 or ay_start < 0 or az_start < 0:
+                return None
+            ax = float(msg[ax_start+1:ay_start])*9.81
+            ay = float(msg[ay_start+1:az_start])*9.81
+            az = float(msg[az_start+1:])*9.81
+            return ax, ay, az
+        except Exception as e:
+            self.print_method(f'In read_accel: {str(e)}')
             return None
-        ax = float(msg[ax_start+1:ay_start])*9.81
-        ay = float(msg[ay_start+1:az_start])*9.81
-        az = float(msg[az_start+1:])*9.81
-        return ax, ay, az
 
     def read_gyro(self):
-        self.serial.flushOutput()
-        self.serial.flushInput()
-        self.serial.write(b'B3000\n')
-        
-        msg = self.serial.read_until(expected='\r\n'.encode('ascii'), size=50).decode('ascii')
-        wx_start = msg.find('x')
-        wy_start = msg.find('y')
-        wz_start = msg.find('z')
-        if wx_start < 0 or wy_start < 0 or wz_start < 0:
+        try:
+            self.serial.flushOutput()
+            self.serial.flushInput()
+            self.serial.write(b'B3000\n')
+            
+            msg = self.serial.read_until(expected='\r\n'.encode('ascii'), size=50).decode('ascii')
+            wx_start = msg.find('x')
+            wy_start = msg.find('y')
+            wz_start = msg.find('z')
+            if wx_start < 0 or wy_start < 0 or wz_start < 0:
+                return None
+            wx = float(msg[wx_start+1:wy_start])
+            wy = float(msg[wy_start+1:wz_start])
+            wz = float(msg[wz_start+1:])
+            return wx, wy, wz
+        except Exception as e:
+            self.print_method(f'In read_gyro: {str(e)}')
             return None
-        wx = float(msg[wx_start+1:wy_start])
-        wy = float(msg[wy_start+1:wz_start])
-        wz = float(msg[wz_start+1:])
-        return wx, wy, wz
 
     def read_imu(self):
-        self.serial.flushOutput()
-        self.serial.flushInput()
-        self.serial.write(b'B4000\n')
-        
-        msg = self.serial.read_until(expected='\r\n'.encode('ascii'), size=100).decode('ascii')
-        # self.print_method(msg)
-        a_start = msg.find('a')
-        w_start = msg.find('w')
-        if a_start < 0 or w_start < 0:
-            return None, None
-        a_msg = msg[a_start+1:w_start]
-        w_msg = msg[w_start+1:]
-
-        ax_start = a_msg.find('x')
-        ay_start = a_msg.find('y')
-        az_start = a_msg.find('z')
-        wx_start = w_msg.find('x')
-        wy_start = w_msg.find('y')
-        wz_start = w_msg.find('z')
-        if ax_start < 0 or ay_start < 0 or az_start < 0:
-            return None, None
-        if wx_start < 0 or wy_start < 0 or wz_start < 0:
-            return None, None
-        
         try:
-            ax = float(a_msg[ax_start+1:ay_start])*9.81
-            ay = float(a_msg[ay_start+1:az_start])*9.81
-            az = float(a_msg[az_start+1:])*9.81
-            a = [ax, ay, az]
-            wx = float(w_msg[wx_start+1:wy_start])
-            wy = float(w_msg[wy_start+1:wz_start])
-            wz = float(w_msg[wz_start+1:])
-            w = [wx, wy, wz]
-        except:
-            return None, None
+            self.serial.flushOutput()
+            self.serial.flushInput()
+            self.serial.write(b'B4000\n')
+            
+            msg = self.serial.read_until(expected='\r\n'.encode('ascii'), size=100).decode('ascii')
+            # self.print_method(msg)
+            a_start = msg.find('a')
+            w_start = msg.find('w')
+            if a_start < 0 or w_start < 0:
+                return None, None
+            a_msg = msg[a_start+1:w_start]
+            w_msg = msg[w_start+1:]
+
+            ax_start = a_msg.find('x')
+            ay_start = a_msg.find('y')
+            az_start = a_msg.find('z')
+            wx_start = w_msg.find('x')
+            wy_start = w_msg.find('y')
+            wz_start = w_msg.find('z')
+            if ax_start < 0 or ay_start < 0 or az_start < 0:
+                return None, None
+            if wx_start < 0 or wy_start < 0 or wz_start < 0:
+                return None, None
+            
+            try:
+                ax = float(a_msg[ax_start+1:ay_start])*9.81
+                ay = float(a_msg[ay_start+1:az_start])*9.81
+                az = float(a_msg[az_start+1:])*9.81
+                a = [ax, ay, az]
+                wx = float(w_msg[wx_start+1:wy_start])
+                wy = float(w_msg[wy_start+1:wz_start])
+                wz = float(w_msg[wz_start+1:])
+                w = [wx, wy, wz]
+            except:
+                return None, None
         
-        return a, w
+            return a, w
+        except Exception as e:
+            self.print_method(f'In read_imu: {str(e)}')
+            return None, None
     
     def read_encoders_velocity(self):
         self.serial.flushOutput()

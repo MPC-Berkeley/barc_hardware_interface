@@ -148,7 +148,8 @@ class ArduinoInterfaceNode(MPClabNode):
                 imu_msg.angular_velocity.x = wy
                 imu_msg.angular_velocity.y = wx
                 imu_msg.angular_velocity.z = wz
-            self.barc_imu_pub.publish(imu_msg)  
+            if a is not None or w is not None:
+                self.barc_imu_pub.publish(imu_msg)  
         
         if self.enc:
             if self.enc_mode == 'vel':
