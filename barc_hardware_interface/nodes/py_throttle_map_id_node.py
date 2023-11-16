@@ -9,9 +9,10 @@ from sensor_msgs.msg import Imu
 from mpclab_common.pytypes import VehicleState
 from barc_hardware_interface.barc_interface import BarcArduinoInterface, BarcArduinoInterfaceConfig
 
-from mpclab_common.pytypes import VehicleState, VehicleActuation
-from mpclab_common.msg import NodeParamTemplate, VehicleStateMsg, VehicleActuationMsg
+from mpclab_common.pytypes import NodeParamTemplate, VehicleState, VehicleActuation
 from mpclab_common.mpclab_base_nodes import MPClabNode
+
+from mpclab_msgs.msg import VehicleActuationMsg
 
 from collections import deque
 import pickle

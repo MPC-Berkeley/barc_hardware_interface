@@ -8,9 +8,10 @@ import copy
 
 from barc_hardware_interface.barc_interface import BarcArduinoInterface, BarcArduinoInterfaceConfig
 
-from mpclab_common.msg import VehicleStateMsg, VehicleActuationMsg, DriveStateMsg
 from mpclab_common.pytypes import NodeParamTemplate, VehicleActuation, VehicleState
 from mpclab_common.mpclab_base_nodes import MPClabNode
+
+from mpclab_msgs.msg import VehicleStateMsg, VehicleActuationMsg, DriveStateMsg
 
 MSG_TIMEOUT_CTRL = 0.3
 

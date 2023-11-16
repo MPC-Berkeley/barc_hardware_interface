@@ -5,9 +5,10 @@ from rclpy.qos import qos_profile_sensor_data
 
 import copy
 
-from mpclab_common.msg import EncoderMsg
 from mpclab_common.pytypes import NodeParamTemplate
 from mpclab_common.mpclab_base_nodes import MPClabNode
+
+from mpclab_msgs.msg import EncoderMsg
 
 from serial import Serial
 from serial.tools import list_ports
