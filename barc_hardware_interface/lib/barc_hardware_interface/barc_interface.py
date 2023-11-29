@@ -91,6 +91,7 @@ class BarcArduinoInterface():
             self.print_method(f'Throttle limits exceeded, setting to {self.config.throttle_off}')
             throttle = self.config.throttle_off
         if steering > 1.2*self.config.steering_max or steering < 0.8*self.config.steering_min:
+            self.print_method(f'Steering limits exceeded, setting to {self.config.steering_off}')
             steering = self.config.steering_off
         throttle = int(max(min(throttle, self.config.throttle_max), self.config.throttle_min))
         steering = int(max(min(steering, self.config.steering_max), self.config.steering_min))
