@@ -6,7 +6,7 @@ from sensor_msgs.msg import Imu
 
 import copy
 
-from barc_hardware_interface.barc_interface import BarcArduinoInterface, BarcArduinoInterfaceConfig
+from barc_hardware_interface.barc_interface_vesc import BarcArduinoInterface, BarcArduinoInterfaceConfig
 
 from mpclab_common.pytypes import NodeParamTemplate, VehicleActuation, VehicleState
 from mpclab_common.mpclab_base_nodes import MPClabNode
