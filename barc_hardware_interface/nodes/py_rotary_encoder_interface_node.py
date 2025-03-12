@@ -67,6 +67,8 @@ class RotaryEncoderNode(MPClabNode):
         if outputs is not None:
             msg.steering = outputs[0]
             msg.throttle = outputs[1]
+            msg.vx = outputs[2]
+            msg.vy = outputs[3]
             self.get_logger().info(f"Steering = {msg.steering}, Throttle = {msg.throttle}, Vx = {msg.vx}, Vy = {msg.vy}")
             self.serial_data.publish(msg)
 
