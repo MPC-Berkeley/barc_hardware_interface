@@ -42,6 +42,7 @@ install(PROGRAMS
   nodes/py_encoder_interface_node.py
   nodes/py_arduino_interface_vesc_node.py
   nodes/py_rotary_encoder_interface_node.py
+  nodes/py_rotary_encoder_interface_node.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

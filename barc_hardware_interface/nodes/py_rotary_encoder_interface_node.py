@@ -30,17 +30,17 @@ class RotaryEncoderNode(MPClabNode):
             qos_profile_sensor_data
         )
         
-        self.timer_ = self.create_timer(0.05, self.send_data)
+        self.timer_ = self.create_timer(0.01, self.send_data)
 
-        self.arduino = serial.Serial('/dev/ttyACM0', baudrate=115200, timeout=0.1)
+        self.arduino = serial.Serial('/dev/ttyACM0', baudrate=115200, timeout=1)
         time.sleep(2)
         self.arduino.flush()
 
     def read_serial(self):
         try:
             read_msg = "A\n"
-            self.arduino.flushOutput()
-            self.arduino.flushInput()
+            # self.arduino.flushOutput()
+            # self.arduino.flushInput()
             self.arduino.write(read_msg.encode('utf-8'))
             if self.arduino.in_waiting > 0:
                 line = self.arduino.readline().decode('utf-8').strip()
