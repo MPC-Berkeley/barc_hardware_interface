@@ -24,7 +24,8 @@ class BarcArduinoInterfaceConfig(PythonMsg):
     steering_map_mode: str      = field(default='affine')
     steering_map_params: list   = field(default=None)
     throttle_map_mode: str      = field(default='affine')
-    throttle_map_params: list   = field(default=None)
+    throttle_map_params_velocity: list   = field(default=None)
+    throttle_map_params_acceleration: list  = field(default=None) 
     
     control_mode: str = field(default = 'torque')
 
@@ -274,7 +275,7 @@ class BarcArduinoInterface():
     #     return throttle_pwm
 
     def v_to_pwm(self, v, steer_pwm):
-        Kp, Kn, Lp, Ln, Zp, Zn = self.config.throttle_map_params
+        Kp, Kn, Lp, Ln, Zp, Zn = self.config.throttle_map_params_velocity
         # throttle_pwm = self.config.throttle_off + (v + L*(steer_pwm-self.config.steering_off)**2)/K
         if v >= 0:
             throttle_pwm = Zp+ (v/(Kp-Lp*(steer_pwm-self.config.steering_off)**2))
@@ -283,8 +284,11 @@ class BarcArduinoInterface():
         return throttle_pwm
 
     def a_to_pwm(self, a):
-        gain = self.config.throttle_map_params[0]
-        throttle_pwm = a / gain + self.config.throttle_off
+        Kp, Kn, Zp, Zn = self.config.throttle_map_params_acceleration
+        if a >= 0:
+            throttle_pwm = a / Kp + Zp
+        elif a < 0:
+            throttle_pwm = a / Kn + Zn
         return throttle_pwm
 
 if __name__ == '__main__':

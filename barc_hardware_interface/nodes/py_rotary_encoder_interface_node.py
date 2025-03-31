@@ -51,10 +51,10 @@ class RotaryEncoderNode(MPClabNode):
                     # self.get_logger().info(f"length data: {len(data)}")
                     if len(data) == 8:
                         # self.get_logger().info(f"data: {data}")
-                        steering = int(data[1])
-                        throttle = int(data[3])
-                        vx = int(data[5])
-                        vy = int(data[7])
+                        steering = int(data[1]) #data[1]
+                        throttle = int(data[3]) #data[3]
+                        vx = int(data[5]) 
+                        vy = int(data[7]) 
 
                         return steering, throttle, vx, vy
 
