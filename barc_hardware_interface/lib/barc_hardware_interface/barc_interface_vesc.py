@@ -289,6 +289,7 @@ class BarcArduinoInterface():
             throttle_pwm = a / Kp + Zp
         elif a < 0:
             throttle_pwm = a / Kn + Zn
+        print(f'PWM: {throttle_pwm}')
         return throttle_pwm
 
 if __name__ == '__main__':
