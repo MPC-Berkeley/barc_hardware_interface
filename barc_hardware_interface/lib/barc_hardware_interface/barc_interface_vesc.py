@@ -266,6 +266,7 @@ class BarcArduinoInterface():
             steer_pwm = np.tan(steering_angle / outer_gain) / gain + offset
         else:
             raise(ValueError("Steering map mode must be 'affine' or 'arctan'"))
+        print(f'steering PWM: {steer_pwm}')
         return steer_pwm
     
     # def v_to_pwm(self, v):
@@ -284,12 +285,23 @@ class BarcArduinoInterface():
         return throttle_pwm
 
     def a_to_pwm(self, a):
-        Kp, Kn, Zp, Zn = self.config.throttle_map_params_acceleration
-        if a >= 0:
+
+        Kp, Kn, Lp, Ln, Zp, Zn = self.config.throttle_map_params_velocity
+        if a == 0:
+            throttle_pwm = 1500
+        elif a > 0:
             throttle_pwm = a / Kp + Zp
         elif a < 0:
             throttle_pwm = a / Kn + Zn
+        print(f'throttle PWM: {throttle_pwm}')
         return throttle_pwm
+
+        # Kp, Kn, Zp, Zn = self.config.throttle_map_params_acceleration
+        # if a >= 0:
+        #     throttle_pwm = a / Kp + Zp
+        # elif a < 0:
+        #     throttle_pwm = a / Kn + Zn
+        # return throttle_pwm
 
 if __name__ == '__main__':
     arduino = BarcArduinoInterface()
