@@ -293,7 +293,6 @@ class BarcArduinoInterface():
             throttle_pwm = a / Kp + Zp
         elif a < 0:
             throttle_pwm = a / Kn + Zn
-        print(f'throttle PWM: {throttle_pwm}')
         return throttle_pwm
 
         # Kp, Kn, Zp, Zn = self.config.throttle_map_params_acceleration
